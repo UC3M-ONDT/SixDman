@@ -33,15 +33,16 @@ class PlanningTool:
         Initialize the PlanningTool object with a given network topology and bands.
 
         Args:
-            network_instance (Network): The network structure including nodes, links,
-                weights, and hierarchical levels.
-            bands (List[Band]): The optical bands considered for transmission planning.
-                Each Band includes start/end frequencies and physical layer parameters.
-            period_time (int, optional): Time granularity (e.g., 10 units) for periodic
-                traffic updates or recalculation windows. Default is 10.
+        ---------
+            network_instance (Network): 
+                The network structure including nodes, links, weights, and hierarchical levels.
+            bands (List[Band]): 
+                The optical bands considered for transmission planning. Each Band includes start/end frequencies and physical layer parameters.
+            period_time (int, optional): 
+                Time granularity (e.g., 10 units) for periodic traffic updates or recalculation windows. Default is 10.
 
         Example:
-        -------
+        ---------
         >>> from sixdman.core.planning import PlanningTool
         
         >>> # Initialize planning tool
@@ -73,17 +74,26 @@ class PlanningTool:
         spectrum usage planning across different optical bands.
 
         Args:
-            num_fslots (int): Number of frequency slots available in the network.
-            hierarchy_level (int): Target hierarchy level for current planning.
-            minimum_hierarchy_level (int): Minimum hierarchy level for subgraph planning.
-            rolloff (float): Rolloff factor for spectral shaping (default: 0.1).
-            SR (float): Symbol rate in baud (default: 40 Gbaud).
-            BVT_type (int): Identifier for BVT type (default: 1).
-            Max_bit_rate_BVT (np.ndarray): Array of supported BVT bitrates in Gbps.
-            FP_max_num (int): Maximum number of fiber pairs per link (default: 20).
+        ---------
+            num_fslots (int): 
+                Number of frequency slots available in the network.
+            hierarchy_level (int): 
+                Target hierarchy level for current planning.
+            minimum_hierarchy_level (int): 
+                Minimum hierarchy level for subgraph planning.
+            rolloff (float): 
+                Rolloff factor for spectral shaping (default: 0.1).
+            SR (float): 
+                Symbol rate in baud (default: 40 Gbaud).
+            BVT_type (int): 
+                Identifier for BVT type (default: 1).
+            Max_bit_rate_BVT (np.ndarray): 
+                Array of supported BVT bitrates in Gbps.
+            FP_max_num (int): 
+                Maximum number of fiber pairs per link (default: 20).
 
         Example:
-        -------
+        ---------
         >>> planner.initialize_planner(
         ...     num_fslots = num_fslots, # number of frequency slots
         ...     hierarchy_level = 4, # current hierarchy level
@@ -194,7 +204,7 @@ class PlanningTool:
                                  min_rate: float,
                                  max_rate: float,
                                  seed: int, 
-                                 result_directory) -> np.ndarray:
+                                 result_directory):
         """
         Generate or load the initial traffic capacity profile for network nodes using Monte Carlo simulation.
 
@@ -208,22 +218,31 @@ class PlanningTool:
         `self.HL_capacity_final`. This method does not return any value.
 
         Args:
-            num_nodes (int): Number of nodes in the network for which to simulate traffic.
-            monteCarlo_steps (int): Number of Monte Carlo iterations used for averaging.
-            min_rate (float): Minimum possible traffic rate (Gbps) per node.
-            max_rate (float): Maximum possible traffic rate (Gbps) per node.
-            seed (int): Initial random seed for reproducibility of the simulations.
-            result_directory (Path): Directory where results are stored or loaded from.
+        ---------
+            num_nodes (int): 
+                Number of nodes in the network for which to simulate traffic.
+            monteCarlo_steps (int): 
+                Number of Monte Carlo iterations used for averaging.
+            min_rate (float): 
+                Minimum possible traffic rate (Gbps) per node.
+            max_rate (float): 
+                Maximum possible traffic rate (Gbps) per node.
+            seed (int): 
+                Initial random seed for reproducibility of the simulations.
+            result_directory (Path): 
+                Directory where results are stored or loaded from.
 
         Updates:
-            self.HL_capacity_final (np.ndarray): Final per-node traffic capacity values averaged 
-                over all Monte Carlo simulations.
+        ---------
+            self.HL_capacity_final (np.ndarray): 
+                Final per-node traffic capacity values averaged over all Monte Carlo simulations.
 
-        Returns:
+        Output:
+        ---------
             None
 
         Example:
-        -------
+        ---------
         >>> # generate port capacity for HL4 nodes uisng Monte Carlo simulation
         >>> planner.generate_initial_traffic_profile(
         ...     num_nodes = len(HL4_all), # all the nodes of minimum hierarchy level
@@ -273,7 +292,7 @@ class PlanningTool:
     def simulate_traffic_annual(self,
                                  lowest_hierarchy_dict: dict,
                                  CAGR: int, 
-                                 result_directory) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+                                 result_directory):
         """
         Simulate annual traffic evolution for the lowest hierarchy-level nodes using a Compound Annual Growth Rate (CAGR).
 
@@ -286,12 +305,16 @@ class PlanningTool:
         to save computation time. Otherwise, the full annual simulation is performed and results are saved.
 
         Args:
-            lowest_hierarchy_dict (dict): Dictionary containing node IDs for the lowest hierarchy level, 
-                with keys `'standalone'` and `'colocated'`.
-            CAGR (float): Compound Annual Growth Rate (e.g., 0.4 for 40% annual increase).
-            result_directory (Path): Directory where results are read from or written to.
+        ---------
+            lowest_hierarchy_dict (dict): 
+                Dictionary containing node IDs for the lowest hierarchy level, with keys `'standalone'` and `'colocated'`.
+            CAGR (float): 
+                Compound Annual Growth Rate (e.g., 0.4 for 40% annual increase).
+            result_directory (Path): 
+                Directory where results are read from or written to.
 
         Updates:
+        ---------
             self.lowest_HL_added_traffic_annual_standalone (np.ndarray): 
                 Annual incremental traffic for standalone nodes (years × nodes).
             self.lowest_HL_added_traffic_annual_colocated (np.ndarray): 
@@ -301,7 +324,8 @@ class PlanningTool:
             self.residual_capacity_annual (np.ndarray): 
                 Unused capacity per node per year after license allocation (if stored).
         
-        Returns:
+        Output:
+        ---------
             None
 
         Example:
@@ -407,30 +431,49 @@ class PlanningTool:
         tracks spectrum occupancy, and updates GSNR for each assigned path.
 
         Args:
-            path_IDx (int or None): Index of the selected path in K_path_attributes_df. If None,
-                the function performs assignment for a colocated node.
-            path_type (str): Type of path ('primary' or 'secondary').
-            kpair_counter (int): Counter for the current K-shortest path pair being processed.
-            year (int): Planning year for multi-period simulation.
-            K_path_attributes_df (pd.DataFrame): DataFrame containing attributes of all K-shortest paths.
-            BVT_number (int): Number of BVTs to assign for this path.
-            node_IDx (int): Index of the current node being processed.
-            node_list (list): List of all node identifiers.
-            GSNR_link (np.ndarray): GSNR values per frequency slot per link.
-            LSP_array_pair (np.ndarray): Spectrum occupancy array [FS, link, fiber pair].
-            Year_FP_pair (np.ndarray): Annual fiber pair usage array [year, link].
-            HL_subnet_links (np.ndarray): List of high-level subnetwork link indices.
+        --------
+            path_IDx (int or None): 
+                Index of the selected path in K_path_attributes_df. If None, the function performs assignment for a colocated node.
+            path_type (str): 
+                Type of path ('primary' or 'secondary').
+            kpair_counter (int): 
+                Counter for the current K-shortest path pair being processed.
+            year (int): 
+                Planning year for multi-period simulation.
+            K_path_attributes_df (pd.DataFrame): 
+                DataFrame containing attributes of all K-shortest paths.
+            BVT_number (int): 
+                Number of BVTs to assign for this path.
+            node_IDx (int): 
+                Index of the current node being processed.
+            node_list (list): 
+                List of all node identifiers.
+            GSNR_link (np.ndarray): 
+                GSNR values per frequency slot per link.
+            LSP_array_pair (np.ndarray): 
+                Spectrum occupancy array [FS, link, fiber pair].
+            Year_FP_pair (np.ndarray): 
+                Annual fiber pair usage array [year, link].
+            HL_subnet_links (np.ndarray): 
+                List of high-level subnetwork link indices.
 
         Updates:
-            - LSP_array_pair: Updates spectrum occupancy for allocated frequency slots and fiber pairs.
-            - Year_FP_pair: Updates annual fiber pair usage for links in the assigned path.
-            - Year_FP_HL_colocated: Updated for colocated HL nodes when path_IDx is None.
-            - GSNR_BVT_Kpair_BVTnum_primary / _secondary: Stores GSNR per BVT.
-            - HL_dest_prim / HL_dest_scnd: Stores destination node per path pair.
-            - BVT_CBand_count_path, BVT_superCBand_count_path, BVT_superCLBand_count_path:
-            Counts BVTs assigned in each spectral band.
+        --------
+            LSP_array_pair: 
+                Updates spectrum occupancy for allocated frequency slots and fiber pairs.
+            Year_FP_pair: 
+                Updates annual fiber pair usage for links in the assigned path.
+            Year_FP_HL_colocated: 
+                Updated for colocated HL nodes when path_IDx is None.
+            GSNR_BVT_Kpair_BVTnum_primary / _secondary: 
+                Stores GSNR per BVT.
+            HL_dest_prim / HL_dest_scnd: 
+                Stores destination node per path pair.
+            BVT_CBand_count_path, BVT_superCBand_count_path, BVT_superCLBand_count_path:
+                Counts BVTs assigned in each spectral band.
 
-        Returns:
+        Output:
+        --------
             dict, np.ndarray, np.ndarray
             If path_IDx is not None (normal path):
                 - path_info_storage (dict): Contains fiber usage, band counts, 
@@ -441,8 +484,8 @@ class PlanningTool:
                 - Year_FP_HL_colocated (np.ndarray): Updated fiber pair usage for colocated HL node.
         
         Notes:
-            - Uses first-fit strategy: tries to find contiguous free slots exactly matching BVT requirement,
-            otherwise picks the first larger available block.
+        --------
+            - Uses first-fit strategy: tries to find contiguous free slots exactly matching BVT requirement, otherwise picks the first larger available block.
             - Assigns FS in C-band, SuperC-band, and SuperCL-band.
             - Stops searching for further slots once a valid assignment is made.
         """
@@ -684,15 +727,19 @@ class PlanningTool:
         The resulting yearly average node degrees are both stored internally and returned.
 
         Args:
-            hierarchy_level (int): The current HL hierarchy level to analyze 
-                (e.g., 4 for HL4 nodes).
-            Year_FP (np.ndarray): A 2D array of shape (years × links) indicating 
-                the number of allocated fiber pairs per link for each year.
+        --------
+            hierarchy_level (int): 
+                The current HL hierarchy level to analyze (e.g., 4 for HL4 nodes).
+            Year_FP (np.ndarray): 
+                A 2D array of shape (years × links) indicating the number of allocated fiber pairs per link for each year.
 
         Updates:
-            self.degree_number_HLs (np.ndarray): Average node degree of HL nodes for each simulated year.
+        --------
+            self.degree_number_HLs (np.ndarray): 
+                Average node degree of HL nodes for each simulated year.
             
-        Returns:
+        Output:
+        --------
             None
 
         """
@@ -746,6 +793,7 @@ class PlanningTool:
         across all years to reflect cumulative infrastructure growth.
 
         Updates:
+        ---------
             self.HL_All_100G_lincense (np.ndarray):
                 Cumulative total 100G license usage across all nodes for each year.
             self.HL_BVTNum_All (np.ndarray):
@@ -757,7 +805,8 @@ class PlanningTool:
             self.HL_BVTNum_LBand (np.ndarray):
                 Cumulative number of L-band BVTs per year.
 
-        Returns:
+        Output:
+        ---------
             None
             
         """
@@ -809,48 +858,51 @@ class PlanningTool:
         node capacity profiles, traffic flows, and GSNR measurements.
 
         Args:
+        ---------
             hierarchy_level (int): The current hierarchy level being analyzed.
             minimum_hierarchy_level (int): The minimum hierarchy level considered for subgraph generation.
             result_directory (Path): Directory where the output files will be saved.
 
-        Saves the following files:
+        Saves:
+        ---------
 
-        1. `{topology_name}_HL{hierarchy_level}_bvt_info.npz`:
-            - `HL_All_100G_lincense`: Total 100G licenses used per year.
-            - `HL_BVTNum_All`: Total number of BVTs deployed annually.
-            - `HL_BVTNum_CBand`: Number of BVTs allocated in the C-band per year.
-            - `HL_BVTNum_SuperCBand`: Number of BVTs allocated in the Super C-band per year.
-            - `HL_BVTNum_LBand`: Number of BVTs allocated in the L-band per year.
+            1. `{topology_name}_HL{hierarchy_level}_bvt_info.npz`:
+                - `HL_All_100G_lincense`: Total 100G licenses used per year.
+                - `HL_BVTNum_All`: Total number of BVTs deployed annually.
+                - `HL_BVTNum_CBand`: Number of BVTs allocated in the C-band per year.
+                - `HL_BVTNum_SuperCBand`: Number of BVTs allocated in the Super C-band per year.
+                - `HL_BVTNum_LBand`: Number of BVTs allocated in the L-band per year.
 
-        2. `{topology_name}_HL{hierarchy_level}_link_info.npz`:
-            - `HL_links_indices`: Indices of HL links within the network graph.
-            - `num_link_CBand_annual`: Annual count of links used in the C-band.
-            - `num_link_SupCBand_annual`: Annual count of links used in the Super C-band.
-            - `num_link_LBand_annual`: Annual count of links used in the L-band.
-            - `HL_CDegree_Domain`: Weighted degree for C-band links (2 per link per endpoint).
-            - `HL_SuperCDegree_Domain`: Weighted degree for Super C-band links.
-            - `HL_LDegree_Domain`: Weighted degree for L-band links.
-            - `Total_effective_FP_new_annual`: total km of fiber pair usage across all links per year.
-            - `HL_FPNum`: Fiber pair usage per link per year (`Year_FP_new`).
-            - `HL_FPNumCo`: Fiber pair usage per colocated HL node per year (`Year_FP_HL_colocated`).
-            - `degree_number_HLs`: Node degree per HL node.
-            - `traffic_flow_links_array`: Total traffic flow (per fiber pair) on each link per year.
+            2. `{topology_name}_HL{hierarchy_level}_link_info.npz`:
+                - `HL_links_indices`: Indices of HL links within the network graph.
+                - `num_link_CBand_annual`: Annual count of links used in the C-band.
+                - `num_link_SupCBand_annual`: Annual count of links used in the Super C-band.
+                - `num_link_LBand_annual`: Annual count of links used in the L-band.
+                - `HL_CDegree_Domain`: Weighted degree for C-band links (2 per link per endpoint).
+                - `HL_SuperCDegree_Domain`: Weighted degree for Super C-band links.
+                - `HL_LDegree_Domain`: Weighted degree for L-band links.
+                - `Total_effective_FP_new_annual`: total km of fiber pair usage across all links per year.
+                - `HL_FPNum`: Fiber pair usage per link per year (`Year_FP_new`).
+                - `HL_FPNumCo`: Fiber pair usage per colocated HL node per year (`Year_FP_HL_colocated`).
+                - `degree_number_HLs`: Node degree per HL node.
+                - `traffic_flow_links_array`: Total traffic flow (per fiber pair) on each link per year.
 
-        3. `{topology_name}_HL{hierarchy_level}_path_GSNR_info.npz`:
-            - `GSNR_all_paths`: GSNR values for all paths per year.
-            - `GSNR_primary`: GSNR values for primary paths per year.
-            - `GSNR_secondary`: GSNR values for secondary paths per year.
+            3. `{topology_name}_HL{hierarchy_level}_path_GSNR_info.npz`:
+                - `GSNR_all_paths`: GSNR values for all paths per year.
+                - `GSNR_primary`: GSNR values for primary paths per year.
+                - `GSNR_secondary`: GSNR values for secondary paths per year.
 
-        4. `{topology_name}_HL{hierarchy_level}_node_capacity_profile_array.npz`:
-            - `node_capacity_profile_array`: Node capacity evolution per year, including allocations and residual capacities.
-        
-        5. `{topology_name}_HL{hierarchy_level}_segments_latency.npz`:
-            - `latency` (np.ndarray): Array where each element corresponds to a node and contains a tuple 
-                with the latency (in microseconds) of the primary and secondary paths from that node.
-            - `destinations` (np.ndarray): Array where each element corresponds to a node and contains a tuple 
-                with the destination node indices of the primary and secondary paths from that node.
+            4. `{topology_name}_HL{hierarchy_level}_node_capacity_profile_array.npz`:
+                - `node_capacity_profile_array`: Node capacity evolution per year, including allocations and residual capacities.
+            
+            5. `{topology_name}_HL{hierarchy_level}_segments_latency.npz`:
+                - `latency` (np.ndarray): Array where each element corresponds to a node and contains a tuple 
+                    with the latency (in microseconds) of the primary and secondary paths from that node.
+                - `destinations` (np.ndarray): Array where each element corresponds to a node and contains a tuple 
+                    with the destination node indices of the primary and secondary paths from that node.
 
         Notes:
+        ---------
             - The NPZ files are compressed for efficient storage.
             - Arrays typically have shape `[years x links]` or `[years x nodes]` depending on the metric.
             - Frequency band usage arrays (C, Super C, L) allow post-analysis of spectrum utilization.
@@ -920,7 +972,7 @@ class PlanningTool:
                     GSNR_opt_link: np.ndarray,
                     minimum_level: int,
                     node_cap_update_idx: int, 
-                    result_directory) -> float:
+                    result_directory):
         """
         Executes the hierarchical optical network planning algorithm for a given hierarchy level.
     
@@ -939,6 +991,7 @@ class PlanningTool:
             - Capacity profile updates for source and destination nodes
 
         Args:
+        ---------
             hierarchy_level (int): 
                 The current hierarchy level being processed.
             prev_hierarchy_level (int): 
@@ -963,31 +1016,52 @@ class PlanningTool:
                 Directory path where annual and summary results are saved.
 
         Updates:
-        - `self.HL_BVT_number_all_annual (np.ndarray)`: Annual count of deployed BVTs across all nodes.
-        - `self.Residual_Throughput_BVT_standalone_HLs (np.ndarray)`: Residual unallocated throughput for standalone HLs per year.
-        - `self.Residual_Throughput_BVT_colocated_HLs (np.ndarray)`: Residual unallocated throughput for colocated HLs per year.
-        - `self.Year_FP (np.ndarray)`: Number of fiber pairs in different years for network links.
-        - `self.Year_FP_HL_colocated (np.ndarray)`: Number of fiber pairs in years in-site links.
-        - `self.Year_FP_new (np.ndarray)`: Number of fiber pairs in different years for network links based on spectrum assignment.
-        - `self.Total_effective_FP_new_annual (np.ndarray)`: Total km of fiber pair usage across all links per year.
-        - `self.GSNR_BVT_array (np.ndarray)`: GSNR records per year.
-        - `self.GSNR_BVT_array_primary (np.ndarray)`: GSNR records per year for primary paths.
-        - `self.GSNR_BVT_array_secondary (np.ndarray)`: GSNR records per year for secondary paths.
-        - `self.node_capacity_profile_array (np.ndarray)`: Node capacity evolution per year, including allocations and residual capacities.
-        - `self.traffic_flow_links_array (np.ndarray)`: Annual traffic volume per network link.
-        - `self.num_link_CBand_annual (np.ndarray)`, `self.num_link_SupCBand_annual (np.ndarray)`, `self.num_link_LBand_annual (np.ndarray)`: Band utilization counts across links.
-        - `self.num_100G_licence_annual (np.ndarray)`: Annual count of 100G licenses in use.
-        - `self.Residual_100G (np.ndarray)`: Residual 100G traffic capacity not yet allocated.
-        - `self.LAND_Links_Storage (np.ndarray)`: Stores link assignments for LAND pairs.
-        - `self.LSP_array (np.ndarray)`: Link-State-Profile array representing wavelength/channel allocation states across links in eeach year.
-        - `self.path_latency_storage (list)`: Latency records for primary and secondary paths.
-        - `self.destinations_storage (list)`: Destination node records for primary and secondary paths.
+        ---------
+            self.HL_BVT_number_all_annual (np.ndarray): 
+                Annual count of deployed BVTs across all nodes.
+            self.Residual_Throughput_BVT_standalone_HLs (np.ndarray): 
+                Residual unallocated throughput for standalone HLs per year.
+            self.Residual_Throughput_BVT_colocated_HLs (np.ndarray): 
+                Residual unallocated throughput for colocated HLs per year.
+            self.Year_FP (np.ndarray): 
+                Number of fiber pairs in different years for network links.
+            self.Year_FP_HL_colocated (np.ndarray): 
+                Number of fiber pairs in years in-site links.
+            self.Year_FP_new (np.ndarray): 
+                Number of fiber pairs in different years for network links based on spectrum assignment.
+            self.Total_effective_FP_new_annual (np.ndarray): 
+                Total km of fiber pair usage across all links per year.
+            self.GSNR_BVT_array (np.ndarray): 
+                GSNR records per year.
+            self.GSNR_BVT_array_primary (np.ndarray): 
+                GSNR records per year for primary paths.
+            self.GSNR_BVT_array_secondary (np.ndarray): 
+                GSNR records per year for secondary paths.
+            self.node_capacity_profile_array (np.ndarray): 
+                Node capacity evolution per year, including allocations and residual capacities.
+            self.traffic_flow_links_array (np.ndarray): 
+                Annual traffic volume per network link.
+            self.num_link_CBand_annual (np.ndarray), self.num_link_SupCBand_annual (np.ndarray), self.num_link_LBand_annual (np.ndarray): 
+                Band utilization counts across links.
+            self.num_100G_licence_annual (np.ndarray): 
+                Annual count of 100G licenses in use.
+            self.Residual_100G (np.ndarray): 
+                Residual 100G traffic capacity not yet allocated.
+            self.LAND_Links_Storage (np.ndarray): 
+                Stores link assignments for LAND pairs.
+            self.LSP_array (np.ndarray): 
+                Link-State-Profile array representing wavelength/channel allocation states across links in eeach year.
+            self.path_latency_storage (list): 
+                Latency records for primary and secondary paths.
+            self.destinations_storage (list): 
+                Destination node records for primary and secondary paths.
         
-        Returns:
+        Output:
+        ---------
             None
 
         Example:
-        --------
+        ---------
         >>> planner.run_planner(hierarchy_level = 4, # Current hierarchy level
         ...         prev_hierarchy_level = 3, # Previous hierarchy level
         ...         pairs_disjoint = pairs_disjoint, # DataFrame of disjoint LAND pairs

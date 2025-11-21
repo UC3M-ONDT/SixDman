@@ -1,4 +1,4 @@
-Band Module
+band Module
 ============
 
 This module provides classes for **optical transmission bands** and their **parameters** used in multi-band optical network planning.

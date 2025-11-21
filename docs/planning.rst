@@ -1,4 +1,4 @@
-Planning Module
+planning Module
 ================
 
 This module provides the **planning and optimization core** for the SixDman (6-Dimensional Metro-Area Network) framework.  

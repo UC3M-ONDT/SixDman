@@ -111,12 +111,19 @@ class Band:
         Initialize Band instance.
 
         Args:
-            name (str): Band name (e.g., 'C', 'L')
-            start_freq (float): Start frequency in THz
-            end_freq (float): End frequency in THz
-            opt_params (OpticalParameters): Optical transmission parameters
-            network_instance (Network): Reference to the associated network
-            channel_spacing (float, optional): Frequency spacing between channels in THz
+        ---------
+            name (str): 
+                Band name (e.g., 'C', 'L')
+            start_freq (float): 
+                Start frequency in THz
+            end_freq (float): 
+                End frequency in THz
+            opt_params (OpticalParameters): 
+                Optical transmission parameters
+            network_instance (Network): 
+                Reference to the associated network
+            channel_spacing (float, optional): 
+                Frequency spacing between channels in THz
 
         Example:
         -------    
@@ -148,16 +155,18 @@ class Band:
         self.spectrum: np.ndarray = self.calc_spectrum()
         self.num_channels: int = len(self.spectrum)
                                
-    def calc_spectrum(self) -> np.ndarray:
+    def calc_spectrum(self):
         """
         Compute the frequency grid (spectrum) for this band based on
         start_freq, end_freq, and channel_spacing.
 
-        Returns:
-            np.ndarray: Array of center frequencies in THz.
+        Output:
+        ---------
+            np.ndarray: 
+                Array of center frequencies in THz.
 
         Example:
-        ------- 
+        --------- 
         >>> # define C-band frequency slots
         >>> spectrum_C = c_band.calc_spectrum()
         >>> # define total number of frequency slots
@@ -177,21 +186,32 @@ class Band:
         """
         Processes the GSNR and throughput of all links at a given hierarchy level.
 
-        Parameters:
-            f_c_axis (np.ndarray): Center frequencies of the channels [THz].
-            Pch_dBm (np.ndarray): Launch power per channel [dBm].
-            num_Ch_mat (np.ndarray): Channel indices or count for modulation processing.
-            spectrum_C (np.ndarray): C-band frequency set (used for band-dependent params).
-            Nspan_array (np.ndarray): Number of fiber spans per link.
-            hierarchy_level (int): Current hierarchy level of the network topology.
-            minimum_hierarchy_level (int): Lowest level to include in analysis.
-            result_directory (Path): Output directory for caching intermediate results.
+        Args:
+        ---------
+            f_c_axis (np.ndarray): 
+                Center frequencies of the channels [THz].
+            Pch_dBm (np.ndarray): 
+                Launch power per channel [dBm].
+            num_Ch_mat (np.ndarray): 
+                Channel indices or count for modulation processing.
+            spectrum_C (np.ndarray): 
+                C-band frequency set (used for band-dependent params).
+            Nspan_array (np.ndarray): 
+                Number of fiber spans per link.
+            hierarchy_level (int): 
+                Current hierarchy level of the network topology.
+            minimum_hierarchy_level (int): 
+                Lowest level to include in analysis.
+            result_directory (Path): 
+                Output directory for caching intermediate results.
 
-        Returns:
-            Tuple: GSNR matrix, throughput per power, optimal throughput, and optimal power array.
+        Output:
+        ---------
+            Tuple: 
+                GSNR matrix, throughput per power, optimal throughput, and optimal power array.
 
         Example:
-        -------
+        ---------
         >>> f_c_axis = spectrum_C * 1e12  # Convert to Hz
         >>> Pch_dBm = np.arange(-6, -0.9, 0.1)  # Channel power in dBm
         >>> num_Ch_mat = np.arange(1, len(spectrum_C) - 1)  # Channel indices

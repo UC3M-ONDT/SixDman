@@ -1,4 +1,4 @@
-Network Module
+network Module
 ===============
 
 The ``network`` module provides tools for **modeling optical network topologies**,
@@ -46,13 +46,3 @@ Key Methods
 
 - **``land_pair_finder(src_list, candidate_paths_sorted, num_pairs)``**  
   Identify link- and node-disjoint path pairs (LAND pairs) for each source node.
-
-Notes
-------
-
-- Ensure that the file path is correct and accessible.
-- ``matrixName`` is mandatory for ``.mat`` files.
-- The adjacency matrix is stored in **upper-triangular form** to avoid duplicate edges.
-
-- ``Network`` is the **foundation for the planning and simulation modules**,
-  so it should be instantiated and populated before using any planning methods.

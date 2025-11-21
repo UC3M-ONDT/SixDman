@@ -160,7 +160,7 @@
         
           <li class="toctree-l1 ">
             
-              <a href="network.html" class="reference internal ">Network Module</a>
+              <a href="network.html" class="reference internal ">network Module</a>
             
 
             
@@ -169,7 +169,7 @@
         
           <li class="toctree-l1 ">
             
-              <a href="band.html" class="reference internal ">Band Module</a>
+              <a href="band.html" class="reference internal ">band Module</a>
             
 
             
@@ -178,7 +178,7 @@
         
           <li class="toctree-l1 ">
             
-              <a href="planning.html" class="reference internal ">Planning Module</a>
+              <a href="planning.html" class="reference internal ">planning Module</a>
             
 
             
@@ -187,7 +187,7 @@
         
           <li class="toctree-l1 ">
             
-              <a href="analysis.html" class="reference internal ">Optical Result Analyzer Module</a>
+              <a href="analysis.html" class="reference internal ">post_process Module</a>
             
 
             
@@ -223,7 +223,7 @@
         
           <li class="toctree-l1 ">
             
-              <a href="https://github.com/MatinRafiei/SixDman/blob/main/LICENSE" class="reference">License <outboundlink></outboundlink></a>
+              <a href="https://github.com/UC3M-ONDT/SixDman/blob/main/LICENSE" class="reference">License <outboundlink></outboundlink></a>
             
 
             
@@ -232,7 +232,7 @@
         
           <li class="toctree-l1 ">
             
-              <a href="https://github.com/MatinRafiei/SixDman.git" class="reference">GitHub Repository <outboundlink></outboundlink></a>
+              <a href="https://github.com/UC3M-ONDT/SixDman.git" class="reference">GitHub Repository <outboundlink></outboundlink></a>
             
 
             
@@ -294,9 +294,9 @@
       <ul>
         <li><a href="network.html#sixdman.core.network.Network.__init__">(sixdman.core.network.Network method)</a>
 </li>
-        <li><a href="analysis.html#sixdman.core.optical_result_analyzer.analyse_result.__init__">(sixdman.core.optical_result_analyzer.analyse_result method)</a>
-</li>
         <li><a href="planning.html#sixdman.core.planning.PlanningTool.__init__">(sixdman.core.planning.PlanningTool method)</a>
+</li>
+        <li><a href="analysis.html#sixdman.core.post_process.analyse_result.__init__">(sixdman.core.post_process.analyse_result method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -311,7 +311,7 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="analysis.html#sixdman.core.optical_result_analyzer.analyse_result">analyse_result (class in sixdman.core.optical_result_analyzer)</a>
+      <li><a href="analysis.html#sixdman.core.post_process.analyse_result">analyse_result (class in sixdman.core.post_process)</a>
 </li>
       <li><a href="band.html#sixdman.core.band.OpticalParameters.Attributes">Attributes (sixdman.core.band.OpticalParameters attribute)</a>
 </li>
@@ -335,7 +335,7 @@
 </li>
       <li><a href="band.html#id4">beta_3 (sixdman.core.band.OpticalParameters attribute)</a>, <a href="band.html#sixdman.core.band.OpticalParameters.beta_3">[1]</a>
 </li>
-      <li><a href="analysis.html#sixdman.core.optical_result_analyzer.analyse_result.bvt_data">bvt_data (sixdman.core.optical_result_analyzer.analyse_result attribute)</a>
+      <li><a href="analysis.html#sixdman.core.post_process.analyse_result.bvt_data">bvt_data (sixdman.core.post_process.analyse_result attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -343,9 +343,9 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="analysis.html#sixdman.core.optical_result_analyzer.analyse_result.calc_cost">calc_cost() (sixdman.core.optical_result_analyzer.analyse_result method)</a>
+      <li><a href="analysis.html#sixdman.core.post_process.analyse_result.calc_cost">calc_cost() (sixdman.core.post_process.analyse_result method)</a>
 </li>
-      <li><a href="analysis.html#sixdman.core.optical_result_analyzer.analyse_result.calc_latency">calc_latency() (sixdman.core.optical_result_analyzer.analyse_result method)</a>
+      <li><a href="analysis.html#sixdman.core.post_process.analyse_result.calc_E2E_latency_Total">calc_E2E_latency_Total() (sixdman.core.post_process.analyse_result method)</a>
 </li>
       <li><a href="network.html#sixdman.core.network.Network.calc_num_pair">calc_num_pair() (sixdman.core.network.Network method)</a>
 </li>
@@ -354,6 +354,8 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="band.html#sixdman.core.band.Band.channel_spacing">channel_spacing (sixdman.core.band.Band attribute)</a>
+</li>
+      <li><a href="analysis.html#sixdman.core.post_process.analyse_result.compute_E2E_path_latency">compute_E2E_path_latency() (sixdman.core.post_process.analyse_result method)</a>
 </li>
       <li><a href="network.html#sixdman.core.network.Network.compute_hierarchy_subgraph">compute_hierarchy_subgraph() (sixdman.core.network.Network method)</a>
 </li>
@@ -411,6 +413,8 @@
 </li>
       <li><a href="network.html#sixdman.core.network.Network.get_node_degrees">get_node_degrees() (sixdman.core.network.Network method)</a>
 </li>
+      <li><a href="network.html#sixdman.core.network.Network.get_standalone_hierarchy_level">get_standalone_hierarchy_level() (sixdman.core.network.Network method)</a>
+</li>
       <li><a href="network.html#sixdman.core.network.Network.graph">graph (sixdman.core.network.Network attribute)</a>
 </li>
   </ul></td>
@@ -445,7 +449,7 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="analysis.html#sixdman.core.optical_result_analyzer.analyse_result.link_data">link_data (sixdman.core.optical_result_analyzer.analyse_result attribute)</a>
+      <li><a href="analysis.html#sixdman.core.post_process.analyse_result.link_data">link_data (sixdman.core.post_process.analyse_result attribute)</a>
 </li>
       <li><a href="network.html#sixdman.core.network.Network.load_topology">load_topology() (sixdman.core.network.Network method)</a>
 </li>
@@ -469,10 +473,10 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="analysis.html#sixdman.core.optical_result_analyzer.analyse_result.network">network (sixdman.core.optical_result_analyzer.analyse_result attribute)</a>
+      <li><a href="planning.html#sixdman.core.planning.PlanningTool.network">network (sixdman.core.planning.PlanningTool attribute)</a>
 
       <ul>
-        <li><a href="planning.html#sixdman.core.planning.PlanningTool.network">(sixdman.core.planning.PlanningTool attribute)</a>
+        <li><a href="analysis.html#sixdman.core.post_process.analyse_result.network">(sixdman.core.post_process.analyse_result attribute)</a>
 </li>
       </ul></li>
       <li><a href="band.html#sixdman.core.band.Band.num_channels">num_channels (sixdman.core.band.Band attribute)</a>
@@ -491,29 +495,29 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="analysis.html#sixdman.core.optical_result_analyzer.analyse_result.period_time">period_time (sixdman.core.optical_result_analyzer.analyse_result attribute)</a>
+      <li><a href="planning.html#sixdman.core.planning.PlanningTool.period_time">period_time (sixdman.core.planning.PlanningTool attribute)</a>
 
       <ul>
-        <li><a href="planning.html#sixdman.core.planning.PlanningTool.period_time">(sixdman.core.planning.PlanningTool attribute)</a>
+        <li><a href="analysis.html#sixdman.core.post_process.analyse_result.period_time">(sixdman.core.post_process.analyse_result attribute)</a>
 </li>
       </ul></li>
       <li><a href="band.html#id2">phi_MFL (sixdman.core.band.OpticalParameters attribute)</a>, <a href="band.html#sixdman.core.band.OpticalParameters.phi_MFL">[1]</a>
 </li>
       <li><a href="planning.html#sixdman.core.planning.PlanningTool">PlanningTool (class in sixdman.core.planning)</a>
 </li>
-      <li><a href="analysis.html#sixdman.core.optical_result_analyzer.analyse_result.plot_bvt_license">plot_bvt_license() (sixdman.core.optical_result_analyzer.analyse_result method)</a>
+      <li><a href="analysis.html#sixdman.core.post_process.analyse_result.plot_bvt_license">plot_bvt_license() (sixdman.core.post_process.analyse_result method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="analysis.html#sixdman.core.optical_result_analyzer.analyse_result.plot_FP_degree">plot_FP_degree() (sixdman.core.optical_result_analyzer.analyse_result method)</a>
+      <li><a href="analysis.html#sixdman.core.post_process.analyse_result.plot_FP_degree">plot_FP_degree() (sixdman.core.post_process.analyse_result method)</a>
 </li>
-      <li><a href="analysis.html#sixdman.core.optical_result_analyzer.analyse_result.plot_FP_usage">plot_FP_usage() (sixdman.core.optical_result_analyzer.analyse_result method)</a>
+      <li><a href="analysis.html#sixdman.core.post_process.analyse_result.plot_FP_usage">plot_FP_usage() (sixdman.core.post_process.analyse_result method)</a>
 </li>
-      <li><a href="analysis.html#sixdman.core.optical_result_analyzer.analyse_result.plot_link_state">plot_link_state() (sixdman.core.optical_result_analyzer.analyse_result method)</a>
+      <li><a href="analysis.html#sixdman.core.post_process.analyse_result.plot_link_state">plot_link_state() (sixdman.core.post_process.analyse_result method)</a>
 </li>
       <li><a href="band.html#sixdman.core.band.Band.process_link_gsnr">process_link_gsnr() (sixdman.core.band.Band method)</a>
 </li>
-      <li><a href="analysis.html#sixdman.core.optical_result_analyzer.analyse_result.processing_level_list">processing_level_list (sixdman.core.optical_result_analyzer.analyse_result attribute)</a>
+      <li><a href="analysis.html#sixdman.core.post_process.analyse_result.processing_level_list">processing_level_list (sixdman.core.post_process.analyse_result attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -521,6 +525,8 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="analysis.html#sixdman.core.post_process.analyse_result.results_directory">results_directory (sixdman.core.post_process.analyse_result attribute)</a>
+</li>
       <li><a href="band.html#id12">rof (sixdman.core.band.OpticalParameters attribute)</a>, <a href="band.html#sixdman.core.band.OpticalParameters.rof">[1]</a>
 </li>
   </ul></td>
@@ -535,7 +541,7 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="analysis.html#sixdman.core.optical_result_analyzer.analyse_result.save_directory">save_directory (sixdman.core.optical_result_analyzer.analyse_result attribute)</a>
+      <li><a href="analysis.html#sixdman.core.post_process.analyse_result.save_directory">save_directory (sixdman.core.post_process.analyse_result attribute)</a>
 </li>
       <li><a href="planning.html#sixdman.core.planning.PlanningTool.simulate_traffic_annual">simulate_traffic_annual() (sixdman.core.planning.PlanningTool method)</a>
 </li>

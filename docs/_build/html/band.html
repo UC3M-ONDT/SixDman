@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-      <title>Band Module</title>
+      <title>band Module</title>
     
           <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
           <link rel="stylesheet" href="_static/theme.css " type="text/css" />
@@ -21,8 +21,8 @@
     
   <link rel="index" title="Index" href="genindex.html" />
   <link rel="search" title="Search" href="search.html" />
-  <link rel="next" title="Planning Module" href="planning.html" />
-  <link rel="prev" title="Network Module" href="network.html" /> 
+  <link rel="next" title="planning Module" href="planning.html" />
+  <link rel="prev" title="network Module" href="network.html" /> 
   </head>
 
   <body>
@@ -162,7 +162,7 @@
         
           <li class="toctree-l1 ">
             
-              <a href="network.html" class="reference internal ">Network Module</a>
+              <a href="network.html" class="reference internal ">network Module</a>
             
 
             
@@ -171,7 +171,7 @@
         
           <li class="toctree-l1 current">
             
-              <a href="#" class="reference internal current">Band Module</a>
+              <a href="#" class="reference internal current">band Module</a>
             
 
             
@@ -190,7 +190,7 @@
         
           <li class="toctree-l1 ">
             
-              <a href="planning.html" class="reference internal ">Planning Module</a>
+              <a href="planning.html" class="reference internal ">planning Module</a>
             
 
             
@@ -199,7 +199,7 @@
         
           <li class="toctree-l1 ">
             
-              <a href="analysis.html" class="reference internal ">Optical Result Analyzer Module</a>
+              <a href="analysis.html" class="reference internal ">post_process Module</a>
             
 
             
@@ -263,18 +263,18 @@
   <ul class="breadcrumbs">
     <li><a href="index.html">Docs</a> &raquo;</li>
     
-    <li>Band Module</li>
+    <li>band Module</li>
   </ul>
   
 
   <ul class="page-nav">
   <li class="prev">
     <a href="network.html"
-       title="previous chapter">← Network Module</a>
+       title="previous chapter">← network Module</a>
   </li>
   <li class="next">
     <a href="planning.html"
-       title="next chapter">Planning Module →</a>
+       title="next chapter">planning Module →</a>
   </li>
 </ul>
   
@@ -283,7 +283,7 @@
           <div class="content" role="main" v-pre>
             
   <section id="band-module">
-<h1>Band Module<a class="headerlink" href="#band-module" title="Link to this heading">¶</a></h1>
+<h1>band Module<a class="headerlink" href="#band-module" title="Link to this heading">¶</a></h1>
 <p>This module provides classes for <strong>optical transmission bands</strong> and their <strong>parameters</strong> used in multi-band optical network planning.</p>
 <section id="module-overview">
 <h2>Module Overview<a class="headerlink" href="#module-overview" title="Link to this heading">¶</a></h2>
@@ -692,18 +692,25 @@ compute the channel frequencies.</p>
 <dt class="sig sig-object py" id="sixdman.core.band.Band.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_freq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_freq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network_instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_spacing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sixdman.core.band.Band.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Initialize Band instance.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<em>str</em>) – Band name (e.g., ‘C’, ‘L’)</p></li>
-<li><p><strong>start_freq</strong> (<em>float</em>) – Start frequency in THz</p></li>
-<li><p><strong>end_freq</strong> (<em>float</em>) – End frequency in THz</p></li>
-<li><p><strong>opt_params</strong> (<a class="reference internal" href="#sixdman.core.band.OpticalParameters" title="sixdman.core.band.OpticalParameters"><em>OpticalParameters</em></a>) – Optical transmission parameters</p></li>
-<li><p><strong>network_instance</strong> (<a class="reference internal" href="network.html#sixdman.core.network.Network" title="sixdman.core.network.Network"><em>Network</em></a>) – Reference to the associated network</p></li>
-<li><p><strong>channel_spacing</strong> (<em>float</em><em>, </em><em>optional</em>) – Frequency spacing between channels in THz</p></li>
-</ul>
+<section id="args">
+<h3>Args:<a class="headerlink" href="#args" title="Link to this heading">¶</a></h3>
+<blockquote>
+<div><dl class="simple">
+<dt>name (str):</dt><dd><p>Band name (e.g., ‘C’, ‘L’)</p>
+</dd>
+<dt>start_freq (float):</dt><dd><p>Start frequency in THz</p>
+</dd>
+<dt>end_freq (float):</dt><dd><p>End frequency in THz</p>
+</dd>
+<dt>opt_params (OpticalParameters):</dt><dd><p>Optical transmission parameters</p>
+</dd>
+<dt>network_instance (Network):</dt><dd><p>Reference to the associated network</p>
+</dd>
+<dt>channel_spacing (float, optional):</dt><dd><p>Frequency spacing between channels in THz</p>
 </dd>
 </dl>
+</div></blockquote>
+</section>
 <section id="id17">
 <h3>Example:<a class="headerlink" href="#id17" title="Link to this heading">¶</a></h3>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">sixdman.core.band</span><span class="w"> </span><span class="kn">import</span> <span class="n">Band</span>
@@ -728,14 +735,15 @@ compute the channel frequencies.</p>
 <span class="sig-name descname"><span class="pre">calc_spectrum</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sixdman.core.band.Band.calc_spectrum" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the frequency grid (spectrum) for this band based on
 start_freq, end_freq, and channel_spacing.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Array of center frequencies in THz.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>np.ndarray</p>
+<section id="output">
+<h3>Output:<a class="headerlink" href="#output" title="Link to this heading">¶</a></h3>
+<blockquote>
+<div><dl class="simple">
+<dt>np.ndarray:</dt><dd><p>Array of center frequencies in THz.</p>
 </dd>
 </dl>
+</div></blockquote>
+</section>
 <section id="id18">
 <h3>Example:<a class="headerlink" href="#id18" title="Link to this heading">¶</a></h3>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># define C-band frequency slots</span>
@@ -751,28 +759,40 @@ start_freq, end_freq, and channel_spacing.</p>
 <dt class="sig sig-object py" id="sixdman.core.band.Band.process_link_gsnr">
 <span class="sig-name descname"><span class="pre">process_link_gsnr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f_c_axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Pch_dBm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_Ch_mat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum_C</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nspan_array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy_level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_hierarchy_level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_directory</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sixdman.core.band.Band.process_link_gsnr" title="Link to this definition">¶</a></dt>
 <dd><p>Processes the GSNR and throughput of all links at a given hierarchy level.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>f_c_axis</strong> (<em>np.ndarray</em>) – Center frequencies of the channels [THz].</p></li>
-<li><p><strong>Pch_dBm</strong> (<em>np.ndarray</em>) – Launch power per channel [dBm].</p></li>
-<li><p><strong>num_Ch_mat</strong> (<em>np.ndarray</em>) – Channel indices or count for modulation processing.</p></li>
-<li><p><strong>spectrum_C</strong> (<em>np.ndarray</em>) – C-band frequency set (used for band-dependent params).</p></li>
-<li><p><strong>Nspan_array</strong> (<em>np.ndarray</em>) – Number of fiber spans per link.</p></li>
-<li><p><strong>hierarchy_level</strong> (<em>int</em>) – Current hierarchy level of the network topology.</p></li>
-<li><p><strong>minimum_hierarchy_level</strong> (<em>int</em>) – Lowest level to include in analysis.</p></li>
-<li><p><strong>result_directory</strong> (<em>Path</em>) – Output directory for caching intermediate results.</p></li>
-</ul>
+<section id="id19">
+<h3>Args:<a class="headerlink" href="#id19" title="Link to this heading">¶</a></h3>
+<blockquote>
+<div><dl class="simple">
+<dt>f_c_axis (np.ndarray):</dt><dd><p>Center frequencies of the channels [THz].</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>GSNR matrix, throughput per power, optimal throughput, and optimal power array.</p>
+<dt>Pch_dBm (np.ndarray):</dt><dd><p>Launch power per channel [dBm].</p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Tuple</p>
+<dt>num_Ch_mat (np.ndarray):</dt><dd><p>Channel indices or count for modulation processing.</p>
+</dd>
+<dt>spectrum_C (np.ndarray):</dt><dd><p>C-band frequency set (used for band-dependent params).</p>
+</dd>
+<dt>Nspan_array (np.ndarray):</dt><dd><p>Number of fiber spans per link.</p>
+</dd>
+<dt>hierarchy_level (int):</dt><dd><p>Current hierarchy level of the network topology.</p>
+</dd>
+<dt>minimum_hierarchy_level (int):</dt><dd><p>Lowest level to include in analysis.</p>
+</dd>
+<dt>result_directory (Path):</dt><dd><p>Output directory for caching intermediate results.</p>
 </dd>
 </dl>
-<section id="id19">
-<h3>Example:<a class="headerlink" href="#id19" title="Link to this heading">¶</a></h3>
+</div></blockquote>
+</section>
+<section id="id20">
+<h3>Output:<a class="headerlink" href="#id20" title="Link to this heading">¶</a></h3>
+<blockquote>
+<div><dl class="simple">
+<dt>Tuple:</dt><dd><p>GSNR matrix, throughput per power, optimal throughput, and optimal power array.</p>
+</dd>
+</dl>
+</div></blockquote>
+</section>
+<section id="id21">
+<h3>Example:<a class="headerlink" href="#id21" title="Link to this heading">¶</a></h3>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f_c_axis</span> <span class="o">=</span> <span class="n">spectrum_C</span> <span class="o">*</span> <span class="mf">1e12</span>  <span class="c1"># Convert to Hz</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Pch_dBm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># Channel power in dBm</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">num_Ch_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">spectrum_C</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Channel indices</span>
@@ -820,11 +840,11 @@ start_freq, end_freq, and channel_spacing.</p>
             <div class="inner"><ul class="page-nav">
   <li class="prev">
     <a href="network.html"
-       title="previous chapter">← Network Module</a>
+       title="previous chapter">← network Module</a>
   </li>
   <li class="next">
     <a href="planning.html"
-       title="next chapter">Planning Module →</a>
+       title="next chapter">planning Module →</a>
   </li>
 </ul><div class="footer" role="contentinfo">
       &#169; Copyright 2025, Matin Rafiei Forooshani.

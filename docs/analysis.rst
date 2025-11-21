@@ -1,4 +1,4 @@
-Optical Result Analyzer Module
+post_process Module
 ===============================
 
 Module Overview
@@ -25,7 +25,7 @@ Key Class
 
 - **analyse_result**
     ~~~~~~~
-    .. autoclass:: sixdman.core.optical_result_analyzer.analyse_result
+    .. autoclass:: sixdman.core.post_process.analyse_result
         :members:
         :special-members: __init__
         :undoc-members:
@@ -49,5 +49,5 @@ Key Methods
 - **``calc_cost(save_flag, save_suffix='', C_100GL=1, C_MCS=0.7, C_RoB=1.9, C_IRU=0.5)``**  
   Compute OPEX and CAPEX values for network deployment over time.
 
-- **``calc_latency(primary_paths, processing_level_list, save_flag, save_suffix='')``**  
+- **``calc_E2E_latency_Total(latency_core_array, destination_core_array, processing_level_list, save_flag, save_suffix='')``**  
   Compute end-to-end latency across hierarchical processing levels.

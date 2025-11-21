@@ -17,54 +17,54 @@ How to Contribute
 There are several ways you can contribute to SixDman:
 
 1. **Report Bugs**
-   - Check existing `issues <https://github.com/MatinRafiei/SixDman/issues>`_ to see if the bug is already reported.
-   - Open a new issue and provide:
-     - Steps to reproduce
-     - Expected behavior
-     - Actual behavior
-     - Screenshots or error logs (if any)
+    - Check existing `issues <https://github.com/UC3M-ONDT/SixDman/issues>`_ to see if the bug is already reported.
+    - Open a new issue and provide:
+       - Steps to reproduce
+       - Expected behavior
+       - Actual behavior
+       - Screenshots or error logs (if any)
 
 2. **Suggest New Features**
-   - Open a feature request issue describing:
-     - Why the feature is needed
-     - Possible implementation ideas
+    - Open a feature request issue describing:
+      - Why the feature is needed
+      - Possible implementation ideas
 
 3. **Improve Documentation**
-   - Fix typos, add examples, or clarify confusing sections.
-   - Update the ``README.md`` or docstrings.
+    - Fix typos, add examples, or clarify confusing sections.
+    - Update the ``README.md`` or docstrings.
 
 4. **Submit Code Changes**  
 
-   - **Fork the repository**  
-     Click the "Fork" button at the top right of this page.
-   - **Clone your fork**:
+    - **Fork the repository**  
+      Click the "Fork" button at the top right of this page.
+    - **Clone your fork**:
 
-     .. code-block:: bash
+      .. code-block:: bash
 
-        git clone https://github.com/your-username/SixDman.git
-        cd SixDman
+         git clone https://github.com/your-username/SixDman.git
+         cd SixDman
 
-   - **Create a branch**:
+    - **Create a branch**:
 
-     .. code-block:: bash
+      .. code-block:: bash
 
-        git checkout -b my-feature
+         git checkout -b my-feature
 
-   - **Make your changes**
-     - Follow existing code style and conventions.
-     - Write clear, concise commit messages:
+    - **Make your changes**
+      - Follow existing code style and conventions.
+      - Write clear, concise commit messages:
 
-       .. code-block:: bash
+        .. code-block:: bash
 
-          git commit -m "Add SNR calculation for multi-band support"
+           git commit -m "Add SNR calculation for multi-band support"
 
-   - **Push and open a Pull Request**:
+    - **Push and open a Pull Request**:
 
-     .. code-block:: bash
+      .. code-block:: bash
 
-        git push origin my-feature
+         git push origin my-feature
 
-     Then go to your fork on GitHub and open a **Pull Request**.
+      Then go to your fork on GitHub and open a **Pull Request**.
 
 -----------------------
 
@@ -91,7 +91,7 @@ Running the Project Locally
 
    .. code-block:: bash
 
-      git clone https://github.com/MatinRafiei/SixDman.git
+      git clone https://github.com/UC3M-ONDT/SixDman.git
       cd sixdman
       python -m venv .venv
       source .venv/bin/activate  # Linux/Mac
@@ -115,5 +115,5 @@ Code of Conduct
 ---------------
 
 Please note that this project follows the
-`Contributor Covenant Code of Conduct <https://github.com/MatinRafiei/SixDman/blob/main/CODE_OF_CONDUCT.md>`_.
+`Contributor Covenant Code of Conduct <https://github.com/UC3M-ONDT/SixDman/blob/main/CODE_OF_CONDUCT.md>`_.
 Be respectful and collaborative when interacting with the community.

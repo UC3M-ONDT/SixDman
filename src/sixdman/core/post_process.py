@@ -32,11 +32,17 @@ class analyse_result:
         Initialize the AnalyseResult object.
 
         Args:
-            network_instance (Network): The optical network structure.
-            period_time (int): Simulation or planning time period (e.g., 10 years).
-            processing_level_list (List[int]): Hierarchy levels to process (e.g., [2, 3, 4]).
-            results_directory(Path): Path to the directory where .npz result files are stored.
-            save_directory (Path): Path to the directory where output plots will save in.
+        --------
+            network_instance (Network): 
+                The optical network structure.
+            period_time (int): 
+                Simulation or planning time period (e.g., 10 years).
+            processing_level_list (List[int]): 
+                Hierarchy levels to process (e.g., [2, 3, 4]).
+            results_directory(Path): 
+                Path to the directory where .npz result files are stored.
+            save_directory (Path): 
+                Path to the directory where output plots will save in.
 
         Example:
         --------
@@ -123,21 +129,26 @@ class analyse_result:
         where each row corresponds to a specific link and each column to a simulation year. Vertical dashed lines
         separate different hierarchical levels using the provided splitter.
 
-        Args:
-            splitter (List): A list indicating how many links are in each hierarchy level (used for dashed separators).
-            save_flag (int): If 1, the plot will be saved to disk.
-            save_suffix (str, optional): Custom suffix for the saved file name. Default is "".
-            flag_plot (int, optional): If 1, show the plot; otherwise, return the data. Default is 1.
+        Args: 
+        --------
+            splitter (List): 
+                A list indicating how many links are in each hierarchy level (used for dashed separators). 
+            save_flag (int): 
+                If 1, the plot will be saved to disk. 
+            save_suffix (str, optional): 
+                Custom suffix for the saved file name. Default is "". 
+            flag_plot (int, optional): 
+                If 1, show the plot; otherwise, return the data. Default is 1. 
 
-        Returns:
-            np.ndarray: If flag_plot == 0, returns the link state matrix of shape (years, total_links).
-                        Each element corresponds to the FP number assigned to a specific link in a given year.
+        Output: 
+        --------
+            np.ndarray: 
+                If flag_plot == 0, returns the link state matrix of shape (years, total_links). Each element corresponds to the FP number assigned to a specific link in a given year.
                         
-        Notes:
-            - When save_flag = 1, the figure is saved in the output directory with the 
-                filename pattern {topology_name}_Link_State{save_suffix}.png.
-		    - The visualization allows monitoring the temporal evolution of FP allocation 
-                and link utilization across all hierarchical levels.
+        Notes: 
+        --------
+            - When save_flag = 1, the figure is saved in the output directory with the filename pattern {topology_name}_Link_State{save_suffix}.png 
+            - The visualization allows monitoring the temporal evolution of FP allocation and link utilization across all hierarchical levels. 
 
         Example:
         ---------
@@ -233,16 +244,22 @@ class analyse_result:
             - The total number of FPs (right y-axis, linear scale)
 
         Args:
-            save_flag (int): If 1, saves the plot to the result directory.
-            save_suffix (str): Optional suffix to append to the saved filename.
-            flag_plot (int): If 1, display the plot; if 0, skip plotting.
+        --------
+            save_flag (int): 
+                If 1, saves the plot to the result directory.
+            save_suffix (str): 
+                Optional suffix to append to the saved filename.
+            flag_plot (int): 
+                If 1, display the plot; if 0, skip plotting.
 
-        Returns:
+        Output:
+        --------
             None
             
         Notes:
-            - The cumulative FP usage represents the total deployed fiber length across all active links and years.
-		    - When save_flag = 1, the figure is stored as {topology_name}_FP_Usage{save_suffix}.png in the result directory.
+        --------
+            - The cumulative FP usage represents the total deployed fiber length across all active links and years. 
+		    - When save_flag = 1, the figure is stored as {topology_name}_FP_Usage{save_suffix}.png in the result directory. 
 
         Example:
         --------
@@ -319,18 +336,23 @@ class analyse_result:
             - Nodal degrees for C-band, SuperC-band, and L-band (right Y-axis, linear scale)
 
         Args:
-            save_flag (int): If 1, saves the plot as an image to the save_directory.
-            save_suffix (str): Optional suffix to append to the saved filename.
-            flag_plot (int): If 1, plot will be displayed. If 0, no plot is shown.
+        ---------
+            save_flag (int): 
+                If 1, saves the plot as an image to the save_directory.
+            save_suffix (str): 
+                Optional suffix to append to the saved filename.
+            flag_plot (int): 
+                If 1, plot will be displayed. If 0, no plot is shown.
 
-        Returns:
+        Output:
+        ---------
             None
             
         Notes:
-            - FP usage represents the total deployed fiber length in kilometers, summed across all links and years.
-	        - Nodal degree metrics indicate the number of active fiber-pair connections per node in each spectral band.
-	        - When save_flag = 1, the plot is stored in the results directory with filename pattern 
-	            {topology_name}_FP_Degree{save_suffix}.png}.
+        ---------
+            - FP usage represents the total deployed fiber length in kilometers, summed across all links and years. 
+	        - Nodal degree metrics indicate the number of active fiber-pair connections per node in each spectral band. 
+	        - When save_flag = 1, the plot is stored in the results directory with filename pattern {topology_name}_FP_Degree{save_suffix}.png}. 
 
         Example:
         --------
@@ -413,23 +435,28 @@ class analyse_result:
 
         This function visualizes:
             - The cumulative count of BVTs (Bandwidth Variable Transponders) for each band: 
-            C-Band, SuperC-Band, and L-Band (left Y-axis, log scale).
+                C-Band, SuperC-Band, and L-Band (left Y-axis, log scale). 
             - The corresponding allocation of 100G licenses proportionally distributed across 
-            the bands (right Y-axis, linear scale).
+                the bands (right Y-axis, linear scale). 
 
         Args:
-            save_flag (int): If 1, saves the plot as an image to the save_directory.
-            save_suffix (str): Optional suffix for the saved image filename.
-            flag_plot (int): If 1, displays the plot; if 0, skips plotting.
+        ---------
+            save_flag (int): 
+                If 1, saves the plot as an image to the save_directory.
+            save_suffix (str): 
+                Optional suffix for the saved image filename.
+            flag_plot (int): 
+                If 1, displays the plot; if 0, skips plotting.
 
-        Returns:
+        Output:
+        ---------
             None
             
         Notes:
-            - The plotted data reflects cumulative deployment across simulation years, combining all hierarchy levels.
-	        - 100G license counts are derived proportionally from BVT allocations, assuming four 100G channels per BVT.
-	        - When save_flag = 1, the plot is saved in the results directory under the filename pattern 
-	            {topology_name}_BVT_License{save_suffix}.png.
+        ---------
+            - The plotted data reflects cumulative deployment across simulation years, combining all hierarchy levels. 
+	        - 100G license counts are derived proportionally from BVT allocations, assuming four 100G channels per BVT. 
+	        - When save_flag = 1, the plot is saved in the results directory under the filename pattern {topology_name}_BVT_License{save_suffix}.png. 
 
         Example:
         --------
@@ -515,7 +542,7 @@ class analyse_result:
                   C_100GL: float = 1,
                   C_MCS: float = 0.7,
                   C_RoB: float = 1.9,
-                  C_IRU: float = 0.5) -> pd.DataFrame:
+                  C_IRU: float = 0.5):
         """
         Compute OPEX and CAPEX values for network deployment over time.
 
@@ -523,20 +550,28 @@ class analyse_result:
         nodal degree evolution and bandwidth resource demands (e.g., BVTs, licenses).
 
         Args:
-            save_flag (int): Whether to save the output CSV file (1) or not (0).
-            save_suffix (str): Optional suffix for the saved file name.
-            C_100GL (float): Unit cost of a 100G license [default = 1].
-            C_MCS (float): Unit cost of a multi-cast switch [default = 0.7].
-            C_RoB (float): Unit cost of ROADM on the Blade [default = 1.9].
-            C_IRU (float): Cost per km of IRU fiber pair usage [default = 0.5].
+        ---------
+            save_flag (int): 
+                Whether to save the output CSV file (1) or not (0).
+            save_suffix (str): 
+                Optional suffix for the saved file name.
+            C_100GL (float): 
+                Unit cost of a 100G license [default = 1].
+            C_MCS (float): 
+                Unit cost of a multi-cast switch [default = 0.7].
+            C_RoB (float): 
+                Unit cost of ROADM on the Blade [default = 1.9].
+            C_IRU (float): 
+                Cost per km of IRU fiber pair usage [default = 0.5].
 
-        Returns:
+        Output:
+        ---------
             dict: A dataframe containing columns for OPEX and CAPEX components for different years.
             
-        Note:
+        Notes:
+        ---------
             - The resulting cost dataframe is used for techno-economic analyses of hierarchical optical networks.
-	        - When save_flag = 1, results are stored as a CSV file named 
-	            {topology_name}_cost_analyse{save_suffix}.csv in the result directory.
+	        - When save_flag = 1, results are stored as a CSV file named {topology_name}_cost_analyse{save_suffix}.csv in the result directory.
 
         Example:
         ---------
@@ -634,7 +669,7 @@ class analyse_result:
                                  latency_core_array: np.ndarray, 
                                  destination_core_array: np.ndarray,
                                  processing_level_list: list,
-                                 ) -> List[Tuple[List[int], float]]:
+                                 ):
         """
         Recursively compute all possible end-to-end (E2E) latency paths from a given core node 
         to its higher-level (top-hierarchy) destination nodes.
@@ -648,45 +683,35 @@ class analyse_result:
         the physical link distance multiplied by a latency constant, e.g., 5 µs/km).
 
         Args:
+        --------
             node (int):
                 Index of the starting node (e.g., a lower-level core or access node).
             
             latency_core_array (np.ndarray):
                 2D or ragged array where each element `[i]` stores the per-path latency values 
                 (in microseconds) from node `i` to its directly connected higher-level nodes.
-                Example structure:
-                    latency_core_array[i] = [latency_primary, latency_secondary, ...]
 
             destination_core_array (np.ndarray):
                 2D or ragged array where each element `[i]` contains the destination node indices 
                 corresponding to the latency entries in `latency_core_array[i]`.
-                Example structure:
-                    destination_core_array[i] = [dest_primary, dest_secondary, ...]
 
             processing_level_list (List[int]):
                 Ordered list of hierarchy levels (e.g., `[1, 2, 3, 4]`) used to determine 
                 when recursion should terminate (the top-level HL layer).
 
-        Returns:
+        Output:
+        ---------
             List[Tuple[List[int], float]]:
                 A list of tuples, where each tuple represents:
                     - `path_list` (List[int]): Node sequence along the E2E path.
                     - `total_latency` (float): Total accumulated latency in microseconds.
-                
-                Example:
-                    [
-                        ([39, 3, 2, 1], 870.0),
-                        ([39, 3, 1], 650.0)
-                    ]
 
         Notes:
+        --------
             - The recursion terminates when the current node belongs to the top hierarchy 
-            (i.e., the standalone nodes in `HL{processing_level_list[-1] - 1}`).
             - Latencies are cumulative: the function sums hop latencies at each recursion step.
-            - The function supports dual-homing scenarios by computing both primary and secondary
-            paths defined in `destination_core_array`.
-            - The latency constant (e.g., 5 µs/km) should be applied during the construction 
-            of `latency_core_array` prior to calling this method.
+            - The function supports dual-homing scenarios by computing both primary and secondary paths defined in `destination_core_array`.
+            - The latency constant (e.g., 5 µs/km) should be applied during the construction of `latency_core_array` prior to calling this method.
 
         Example:
             >>> # Suppose each km adds 5 µs latency, and HL4 nodes connect upward
@@ -745,57 +770,36 @@ class analyse_result:
         The resulting latencies can optionally be saved to a compressed NumPy `.npz` file.
 
         Args:
+        ---------
             latency_core_array (np.ndarray):
-                Array of per-node propagation latencies (in microseconds), where each 
-                element `[i]` contains a list or array of hop latencies from node `i` 
-                to its higher-level destination nodes.  
-                Example:  
-                ```
-                latency_core_array[i] = [120.0, 180.0]  # primary and secondary latencies
-                ```
+                Array of per-node propagation latencies (in microseconds), where each element `[i]` contains a list or array of hop latencies from node `i` to its higher-level destination nodes.  
 
             destination_core_array (np.ndarray):
-                Array of per-node destination indices, corresponding one-to-one with 
-                `latency_core_array`.  
-                Example:  
-                ```
-                destination_core_array[i] = [15, 18]  # primary and secondary destinations
-                ```
+                Array of per-node destination indices, corresponding one-to-one with `latency_core_array`.  
 
             processing_level_list (list[int]):
-                Ordered list of hierarchy levels (e.g., `[4, 3, 2, 1]`) defining the 
-                traversal path from lowest to highest hierarchical layer.  
-                The function assumes the first element (e.g., 4) represents the 
-                lowest hierarchy level to start from.
+                Ordered list of hierarchy levels (e.g., `[4, 3, 2, 1]`) defining the traversal path from lowest to highest hierarchical layer. The function assumes the first element (e.g., 4) represents the lowest hierarchy level to start from.
 
             save_flag (int):
-                If set to `1`, saves the computed latency results to disk as a 
-                compressed `.npz` file.  
+                If set to `1`, saves the computed latency results to disk as a compressed `.npz` file.  
                 If `0`, results are only returned.
 
             save_suffix (str, optional):
-                Optional suffix to append to the output filename.  
-                For example, if `save_suffix='_test'`, the saved file will be named:
-                `{topology_name}_latency_test.npz`.
+                Optional suffix to append to the output filename. For example, if `save_suffix='_test'`, the saved file will be named: `{topology_name}_latency_test.npz`.
 
-        Returns:
+        Output:
+        --------
             np.ndarray:
-                A 1D NumPy array containing the total end-to-end latency (in microseconds)
-                for each lowest-level node path.
+                A 1D NumPy array containing the total end-to-end latency (in microseconds) for each lowest-level node path.
 
         Notes:
-            - Each end-to-end latency value includes:
-                * **Propagation latency** accumulated over the full path.
-                * **Processing overhead** added per hierarchy transition (default: 200 µs per hop).
-            - The recursion terminates at the top-level standalone HL nodes, 
-                as defined in `processing_level_list`.
+        ---------
+            - Each end-to-end latency value includes: **1. Propagation latency** accumulated over the full path. **2. Processing overhead** added per hierarchy transition (default: 200 µs per hop).
+            - The recursion terminates at the top-level standalone HL nodes, as defined in `processing_level_list`.
             - Saving the results is optional and controlled by `save_flag`.
 
-        Saved File (if `save_flag = 1`):
-            `<topology_name>_latency{save_suffix}.npz`
-                - **latency** (np.ndarray): The array of total E2E latency values.
-
         Example:
+        ---------
             >>> E2E_latencies = planner.calc_E2E_latency_Total(
             ...     latency_core_array=latency_core_array,
             ...     destination_core_array=destination_core_array,
