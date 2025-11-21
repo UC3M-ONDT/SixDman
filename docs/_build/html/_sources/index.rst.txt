@@ -77,8 +77,8 @@ Contents
    :maxdepth: 1
    :caption:  Project Info
 
-   License <https://github.com/UC3M-ONDT/SixDman/blob/main/LICENSE>
-   GitHub Repository <https://github.com/UC3M-ONDT/SixDman.git>
+   License <https://github.com/MatinRafiei/SixDman/blob/main/LICENSE>
+   GitHub Repository <https://github.com/MatinRafiei/SixDman.git>
 
 
 ----
@@ -86,10 +86,8 @@ Contents
 Contact
 --------
 
-**Maintainers:** Matin Rafiei Forooshani, Farhad Arpanaei  
+Maintainer: **Matin Rafiei Forooshani**  
 
-📧 Email:  
-- `matinrafiei007@gmail.com <mailto:matinrafiei007@gmail.com>`_  
-- `farhad.arpanaei@uc3m.es <mailto:farhad.arpanaei@uc3m.es>`_
+📧 Email: `matinrafiei007@gmail.com <mailto:matinrafiei007@gmail.com>`_
 
 ----

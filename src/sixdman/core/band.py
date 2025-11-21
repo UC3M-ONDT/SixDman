@@ -296,7 +296,7 @@ class Band:
                         eta_total = 0  # Initialize non-linear coefficient
 
                         if n_s == 1:
-                            n_bar = 0  # TODO: ASM n_bar is always 0 ??
+                            n_bar = 0 
                         else:
                             n_bar = n_s
 

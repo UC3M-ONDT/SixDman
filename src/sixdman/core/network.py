@@ -8,6 +8,8 @@ import os
 import networkx as nx
 from typing import Dict, List, Set, Tuple
 
+####
+
 class Network:
     """A class representing an optical network topology and its properties.
     
@@ -130,8 +132,7 @@ class Network:
 
         except Exception as e:
             raise IOError(f"Failed to load topology from {filepath}: {str(e)}")
- 
-            
+   
     def define_hierarchy(self, 
                          **kwargs) -> Dict[str, Dict[str, List[str]]]:
         """Set the hierarchical levels of nodes in the network.
@@ -196,7 +197,48 @@ class Network:
                 colocated_accum += standalone
 
         return self.hierarchical_levels
+    
+    def _calc_all_hierarchical_nodes(self) -> List:
+        """Calculate and return all hierarchical nodes across all levels, including both 
+            standalone and colocated nodes.
 
+        Behavior:
+            It uses the internal self.hierarchical_levels attribute to calculate all the nodes with aggregation
+            
+        Returns:
+            List: list of all hierarchical nodes.
+
+        """
+        # Collect all unique nodes from all hierarchical levels in hl_dict
+        all_hierarchy_nodes = set()
+        for level in self.hierarchical_levels.values():
+            for node_type in level.values():
+                all_hierarchy_nodes.update(node_type)
+
+        all_hierarchy_nodes = sorted(all_hierarchy_nodes)
+
+        return all_hierarchy_nodes
+    
+    
+    def get_standalone_hierarchy_level(self, node) -> int:
+        """
+        Returns the standalone hierarchical level (HL1, HL2, etc) of the given node.
+        If the node is not found in any standalone level, returns None.
+        
+        Args:
+            node: The index of the node for which the standalone hierarchical level is to be determined.
+
+        Returns:
+            Integer representing the standalone hierarchical level of the input node (e.g., 2 for HL2).
+            
+            
+        """
+        for level_name in ['HL2', 'HL3', 'HL4']:
+            if node in self.hierarchical_levels[level_name]['standalone']:
+                level_number = level_name.replace('HL', '') if isinstance(level_name, str) else level_name
+                return int(level_number)
+        return None
+    
     def _reconstruct_yen_path(self,
                               predecessors: np.ndarray,
                               path_index: int,
@@ -557,7 +599,7 @@ class Network:
         return standalone_path_df
     
     def calc_num_pair(self, 
-                      pairs_disjoint_df: pd.DataFrame):
+                      pairs_disjoint_df: pd.DataFrame) -> np.ndarray:
 
         """calculate the number of candidate link & node disjoint (LAND) pairs.
         
@@ -565,7 +607,7 @@ class Network:
             pairs_disjoint_df: Dataframe of disjoint_pairs
             
         Returns:
-            Number of candidate LAND pairs for all source nodes
+            A numpy array containing the number of candidate LAND pairs for each source node
         """
         return pairs_disjoint_df.groupby('src_node')['primary_path_IDx'].count().to_numpy()
 

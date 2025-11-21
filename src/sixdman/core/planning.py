@@ -6,8 +6,6 @@ from .network import Network
 from .band import Band
 import os
 
-######################## Repo
-
 @dataclass
 class PlanningTool:
     """
@@ -65,7 +63,8 @@ class PlanningTool:
                            rolloff: float = 0.1,
                            SR: float = 40 * 1e9,
                            BVT_type: int = 1,
-                           Max_bit_rate_BVT: np.ndarray = np.array([400])):
+                           Max_bit_rate_BVT: np.ndarray = np.array([400]), 
+                           FP_max_num: int = 20):
         """
         Initialize planning-related matrices and spectrum parameters.
 
@@ -81,6 +80,7 @@ class PlanningTool:
             SR (float): Symbol rate in baud (default: 40 Gbaud).
             BVT_type (int): Identifier for BVT type (default: 1).
             Max_bit_rate_BVT (np.ndarray): Array of supported BVT bitrates in Gbps.
+            FP_max_num (int): Maximum number of fiber pairs per link (default: 20).
 
         Example:
         -------
@@ -93,6 +93,7 @@ class PlanningTool:
 
         self.Max_bit_rate_BVT = Max_bit_rate_BVT
         self.BVT_type = BVT_type
+        self.FP_max_num = FP_max_num
 
         # Get number of HL nodes at given hierarchy level
         num_node_standalone = len(self.network.hierarchical_levels[f"HL{hierarchy_level}"]['standalone'])
@@ -134,14 +135,13 @@ class PlanningTool:
         self.HL_BVT_number_SuperCLband_annual = np.zeros((period_time, len(Max_bit_rate_BVT)))   # C + L-band extended
 
         # Optical spectrum tracking for LSPs (Label Switched Paths)
-        max_fps_link = 20  # Maximum number of fiber placements per link
-        self.LSP_array = np.zeros((self.num_fslots, num_links, max_fps_link))  # General LSP tracking
-        self.LSP_array_Colocated = np.zeros((self.num_fslots, num_node_colocated, max_fps_link))  # Colocated HL tracking
+        self.LSP_array = np.zeros((self.num_fslots, num_links, self.FP_max_num))  # General LSP tracking
+        self.LSP_array_Colocated = np.zeros((self.num_fslots, num_node_colocated, self.FP_max_num))  # Colocated HL tracking
 
         # Band usage tracking (link-level statistics per year)
-        self.num_link_LBand_annual = np.zeros(period_time)
-        self.num_link_SupCBand_annual = np.zeros(period_time)
-        self.num_link_CBand_annual = np.zeros(period_time)
+        self.num_link_LBand_annual = np.zeros(shape = (period_time, num_links), dtype = np.int32)
+        self.num_link_SupCBand_annual = np.zeros(shape = (period_time, num_links), dtype = np.int32)
+        self.num_link_CBand_annual = np.zeros(shape = (period_time, num_links), dtype = np.int32)
 
         # Fiber placement for new subgraph connections
         self.Year_FP_new = np.zeros((period_time, subgraph.number_of_edges()))
@@ -155,32 +155,38 @@ class PlanningTool:
             shape=(period_time, self.network.adjacency_matrix.shape[0], minimum_hierarchy_level)
         )
 
-        # GSNR tracking for each year (one object per year)
+        # GSNR tracking of all paths for each year (one object per year)
         self.GSNR_BVT_array = [None] * period_time
+
+        # GSNR tracking of primary paths for each year (one object per year)
+        self.GSNR_BVT_array_primary = [None] * period_time
+
+        # GSNR tracking of secondary paths for each year (one object per year)
+        self.GSNR_BVT_array_secondary = [None] * period_time
 
         # 10-year GSNR history for HL4-level planning
         self.GSNR_HL4_10Year = []
 
         # Residual capacity of unused 100G units per node
-        self.Residual_100G = np.zeros(self.network.adjacency_matrix.shape[0])
+        self.Residual_100G = np.zeros(len(self.network._calc_all_hierarchical_nodes()))
 
         # Annual 100G license usage tracking per node
         self.num_100G_licence_annual = np.zeros(
-            shape=(period_time, self.network.adjacency_matrix.shape[0])
+            shape=(period_time, len(self.network._calc_all_hierarchical_nodes()))
         )
-
-        # Band-specific usage stats across links and years
-        self.CBand_usage = np.zeros((self.period_time, num_links), dtype=int)
-        self.superCBand_usage = np.zeros((self.period_time, num_links), dtype=int)
-        self.superCLBand_usage = np.zeros((self.period_time, num_links), dtype=int)
 
         # Total traffic flow per link per year
-        self.traffic_flow_array = np.zeros((self.period_time, num_links), dtype=float)
+        self.traffic_flow_links_array = np.zeros((self.period_time, num_links), dtype = float)
 
-        # Stores primary path assignments (-1 means unassigned)
-        self.primary_path_storage = -1 * np.ones(
-            shape=(self.network.adjacency_matrix.shape[0]), dtype=int
-        )
+        # Total traffic flow per node per year
+        self.traffic_flow_nodes_array = np.zeros((self.period_time, self.network.graph.number_of_nodes()), dtype = float)
+
+        self.LAND_Links_Storage = np.zeros(shape = self.network.adjacency_matrix.shape[0], dtype=object)
+        
+        all_nodes = self.network._calc_all_hierarchical_nodes()
+        self.path_latency_storage = np.zeros(len(all_nodes), dtype = object)
+        self.destinations_storage = np.zeros(len(all_nodes), dtype = object)
+        
         
     def generate_initial_traffic_profile(self,
                                  num_nodes: int,
@@ -190,22 +196,31 @@ class PlanningTool:
                                  seed: int, 
                                  result_directory) -> np.ndarray:
         """
-        Simulate initial traffic demands for each node using Monte Carlo sampling.
+        Generate or load the initial traffic capacity profile for network nodes using Monte Carlo simulation.
 
-        This function estimates the initial traffic capacity (e.g., demand or throughput potential) 
-        at each node in the network by generating uniformly distributed random values 
-        over several Monte Carlo steps. If results exist, they are loaded from file.
+        This method estimates the initial traffic demand or capacity for each network node by 
+        performing multiple Monte Carlo simulations. For each iteration, it generates random 
+        capacities uniformly distributed between the specified minimum and maximum rates. 
+        If a precomputed capacity file exists in the given directory, it is loaded instead 
+        to avoid redundant computation.
+
+        The resulting per-node average capacities are stored internally in 
+        `self.HL_capacity_final`. This method does not return any value.
 
         Args:
-            num_nodes (int): Number of nodes to simulate traffic for.
-            monteCarlo_steps (int): Number of Monte Carlo iterations to average over.
-            min_rate (float): Minimum traffic rate per node.
-            max_rate (float): Maximum traffic rate per node.
-            seed (int): Random seed to ensure repeatable simulations.
-            result_directory (Path): Directory where simulation results are stored or loaded from.
+            num_nodes (int): Number of nodes in the network for which to simulate traffic.
+            monteCarlo_steps (int): Number of Monte Carlo iterations used for averaging.
+            min_rate (float): Minimum possible traffic rate (Gbps) per node.
+            max_rate (float): Maximum possible traffic rate (Gbps) per node.
+            seed (int): Initial random seed for reproducibility of the simulations.
+            result_directory (Path): Directory where results are stored or loaded from.
+
+        Updates:
+            self.HL_capacity_final (np.ndarray): Final per-node traffic capacity values averaged 
+                over all Monte Carlo simulations.
 
         Returns:
-            np.ndarray: Array of estimated traffic capacities per node (averaged over simulations).
+            None
 
         Example:
         -------
@@ -260,24 +275,34 @@ class PlanningTool:
                                  CAGR: int, 
                                  result_directory) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
-        Simulate traffic evolution over multiple years for the lowest hierarchy level nodes.
+        Simulate annual traffic evolution for the lowest hierarchy-level nodes using a Compound Annual Growth Rate (CAGR).
 
-        This method applies a compound annual growth rate (CAGR) to simulate traffic demands
-        on standalone and colocated HL4 nodes. It either loads precomputed values or performs 
-        the full calculation. It also estimates the number of required 100G licenses and residual
-        capacities per node per year.
+        This method models how network traffic grows over multiple years at the lowest hierarchy
+        level (e.g., HL4) by applying a constant annual growth rate to each node’s base capacity.
+        It calculates annual traffic, added traffic, number of 100G licenses, and residual capacities
+        for both standalone and colocated nodes.
+
+        If precomputed results are available in the specified directory, they are loaded from file
+        to save computation time. Otherwise, the full annual simulation is performed and results are saved.
 
         Args:
-            lowest_hierarchy_dict (dict): Dictionary containing 'standalone' and 'colocated' node IDs at HL4.
-            CAGR (int): Compound Annual Growth Rate (e.g., 0.4 for 40% annual increase).
-            result_directory (Path): Directory path for reading/writing the traffic matrix.
+            lowest_hierarchy_dict (dict): Dictionary containing node IDs for the lowest hierarchy level, 
+                with keys `'standalone'` and `'colocated'`.
+            CAGR (float): Compound Annual Growth Rate (e.g., 0.4 for 40% annual increase).
+            result_directory (Path): Directory where results are read from or written to.
 
+        Updates:
+            self.lowest_HL_added_traffic_annual_standalone (np.ndarray): 
+                Annual incremental traffic for standalone nodes (years × nodes).
+            self.lowest_HL_added_traffic_annual_colocated (np.ndarray): 
+                Annual incremental traffic for colocated nodes (years × nodes).
+            self.num_100G_licence_annual (np.ndarray): 
+                Number of required 100G licenses per node per year.
+            self.residual_capacity_annual (np.ndarray): 
+                Unused capacity per node per year after license allocation (if stored).
+        
         Returns:
-            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-                - Annual added traffic (standalone HL4 nodes)
-                - Annual added traffic (colocated HL4 nodes)
-                - Annual traffic matrix (standalone HL4 nodes)
-                - Annual traffic matrix (colocated HL4 nodes)
+            None
 
         Example:
         ---------
@@ -305,7 +330,7 @@ class PlanningTool:
             added_traffic_annual = data['added_traffic_annual']
 
             # Initialize first year's 100G license count
-            self.num_100G_licence_annual[0, :] = np.ceil(self.HL_capacity_final / 100)
+            self.num_100G_licence_annual = data['num_100G_licence_annual']
 
             # Split added traffic into standalone and colocated components
             self.lowest_HL_added_traffic_annual_standalone = added_traffic_annual[:, num_node_colocated:]
@@ -357,7 +382,8 @@ class PlanningTool:
             self.lowest_HL_added_traffic_annual_colocated = added_traffic_annual[:, 0:num_node_colocated]
 
             # Persist computed data to file
-            np.savez_compressed(file_path, added_traffic_annual = added_traffic_annual)             
+            np.savez_compressed(file_path, added_traffic_annual = added_traffic_annual, 
+                                num_100G_licence_annual = self.num_100G_licence_annual)             
 
     def _spectrum_assignment(self,
                             path_IDx: int,
@@ -370,36 +396,55 @@ class PlanningTool:
                             node_list: List,
                             GSNR_link: np.ndarray, 
                             LSP_array_pair: np.ndarray, 
-                            Year_FP_pair: np.ndarray) -> dict:
+                            Year_FP_pair: np.ndarray, 
+                            HL_subnet_links = np.ndarray) -> dict:
         """
-        Perform spectrum assignment for a given lightpath.
+        Perform spectrum and fiber pair assignment for a given lightpath in a hierarchical network.
 
-        This function assigns frequency slots and fiber pairs to a path based on available 
-        spectrum and congestion, using a first-fit algorithm. It supports both primary and 
-        secondary paths, as well as co-located (intra-node) scenarios.
+        This function implements a first-fit spectrum assignment algorithm to allocate frequency 
+        slots (FS) and fiber pairs for a path. It supports primary and secondary paths for 
+        standalone HL nodes, as well as co-located HL nodes. It calculates per-BVT costs, 
+        tracks spectrum occupancy, and updates GSNR for each assigned path.
 
         Args:
-            path_IDx: Index of the selected path from K_path_attributes_df.
-            path_type: Type of the path ('primary' or 'secondary').
-            kpair_counter: Counter for the current K-shortest path pair being processed.
-            year: Planning year for multi-period simulation.
-            K_path_attributes_df: DataFrame with attributes of all K-shortest paths.
-            BVT_number: Number of BVTs to assign per node.
-            node_IDx: Index of the current node being processed.
-            node_list: List of all node identifiers.
-            GSNR_link: GSNR values per frequency slot per link.
-            LSP_array_pair: Spectrum occupancy array [FS, link, fiber pair].
-            Year_FP_pair: Annual fiber pair usage record [year, link].
-            HL_SubNetwork_links: List of high-level subnetwork links.
+            path_IDx (int or None): Index of the selected path in K_path_attributes_df. If None,
+                the function performs assignment for a colocated node.
+            path_type (str): Type of path ('primary' or 'secondary').
+            kpair_counter (int): Counter for the current K-shortest path pair being processed.
+            year (int): Planning year for multi-period simulation.
+            K_path_attributes_df (pd.DataFrame): DataFrame containing attributes of all K-shortest paths.
+            BVT_number (int): Number of BVTs to assign for this path.
+            node_IDx (int): Index of the current node being processed.
+            node_list (list): List of all node identifiers.
+            GSNR_link (np.ndarray): GSNR values per frequency slot per link.
+            LSP_array_pair (np.ndarray): Spectrum occupancy array [FS, link, fiber pair].
+            Year_FP_pair (np.ndarray): Annual fiber pair usage array [year, link].
+            HL_subnet_links (np.ndarray): List of high-level subnetwork link indices.
+
+        Updates:
+            - LSP_array_pair: Updates spectrum occupancy for allocated frequency slots and fiber pairs.
+            - Year_FP_pair: Updates annual fiber pair usage for links in the assigned path.
+            - Year_FP_HL_colocated: Updated for colocated HL nodes when path_IDx is None.
+            - GSNR_BVT_Kpair_BVTnum_primary / _secondary: Stores GSNR per BVT.
+            - HL_dest_prim / HL_dest_scnd: Stores destination node per path pair.
+            - BVT_CBand_count_path, BVT_superCBand_count_path, BVT_superCLBand_count_path:
+            Counts BVTs assigned in each spectral band.
 
         Returns:
-            If path_IDx is not None:
-                A tuple:
-                    - path_info_storage: Dictionary with fiber usage stats, BVT assignment, and costs.
-                    - LSP_array_pair: Updated spectrum occupancy.
-                    - Year_FP_pair: Updated fiber usage.
-            If path_IDx is None (colocated node case):
-                - Updated Year_FP_HL_colocated array.
+            dict, np.ndarray, np.ndarray
+            If path_IDx is not None (normal path):
+                - path_info_storage (dict): Contains fiber usage, band counts, 
+                    cost metrics, and information of path like links, distance, number of hops and destination node.
+                - LSP_array_pair (np.ndarray): Updated spectrum occupancy.
+                - Year_FP_pair (np.ndarray): Updated fiber usage per link.
+            If path_IDx is None (colocated node):
+                - Year_FP_HL_colocated (np.ndarray): Updated fiber pair usage for colocated HL node.
+        
+        Notes:
+            - Uses first-fit strategy: tries to find contiguous free slots exactly matching BVT requirement,
+            otherwise picks the first larger available block.
+            - Assigns FS in C-band, SuperC-band, and SuperCL-band.
+            - Stops searching for further slots once a valid assignment is made.
         """
         if path_IDx != None:
 
@@ -421,7 +466,8 @@ class PlanningTool:
 
             # extract the destination node of the primary path from K_path_attributes_df
             destination_path = int(K_path_attributes_df.iloc[path_IDx]['dest_node'])
-
+            path_info_storage['distance'] = K_path_attributes_df.iloc[path_IDx]['distance']
+            
             # store path information in dictionary
             path_info_storage['links'] = linkList_path
             path_info_storage['numHops'] = numHops_path
@@ -505,7 +551,7 @@ class PlanningTool:
                     if FS_count >= BVT_required_FS_HL: # if enough contiguous slots are found, the assignment proceeds
 
                         GSNR_BVT1 = [0]
-
+                        flag_GSNR_calculation = 0
                         for link_idx in range(len(linkList_path_sorted)):
                             
                             if path_type == 'primary':
@@ -513,8 +559,11 @@ class PlanningTool:
                             elif path_type == 'secondary':
                                 LSP_array_pair[FS_path, linkList_path_sorted[link_idx], FP_counter_links[link_idx] - 1] = -(node_list[node_IDx] + 1) # update LSP_array_pair to reflect the new assignment with a negative identifier
 
-                            GSNR_BVT1 += (10 ** (GSNR_link[link_idx, FS_path] / 10)) ** -1 # compute GSNR 
-                                                    
+                            link_in_subnet = np.where(HL_subnet_links == linkList_path_sorted[link_idx])[0]
+                            if len(link_in_subnet) != 0:
+                                flag_GSNR_calculation = 1
+                                GSNR_BVT1 += (10 ** (GSNR_link[link_in_subnet, FS_path] / 10)) ** -1 # compute GSNR
+
                         Flag_SA_continue_path = 0 # stop searching for more slots
                         
                         for link_counter_local in range(len(FP_counter_links)):
@@ -525,21 +574,10 @@ class PlanningTool:
 
                         if FS_path[-1] <= 95: # The final frequency slot used (FS_path(end)) determines the spectrum band
                             BVT_CBand_count_path += 2
-                            band_used = 0  # C-band
                         elif 96 <= FS_path[-1] <= 119:
                             BVT_superCBand_count_path += 2
-                            band_used = 1  # superC
                         else:
                             BVT_superCLBand_count_path += 2
-                            band_used = 2  # superCL
-
-                        for link_id in linkList_path_sorted: # Store the frequency of specific band usage for each link in this year
-                            if band_used == 0:
-                                self.CBand_usage[year - 1, link_id] += 1
-                            elif band_used == 1:
-                                self.superCBand_usage[year - 1, link_id] += 1
-                            elif band_used == 2:
-                                self.superCLBand_usage[year - 1, link_id] += 1
      
                     else: # If no suitable spectrum was found, move to the next FP link
 
@@ -554,7 +592,8 @@ class PlanningTool:
                     self.GSNR_BVT_Kpair_BVTnum_primary[kpair_counter, BVT_counter] =  10 * np.log10(GSNR_BVT1[0] ** -1)
                     self.HL_dest_prim[kpair_counter] = destination_path
                 elif path_type == 'secondary':
-                    self.GSNR_BVT_Kpair_BVTnum_secondary[kpair_counter, BVT_counter] = 10 * np.log10(GSNR_BVT1[0] ** -1)
+                    if flag_GSNR_calculation != 0:
+                        self.GSNR_BVT_Kpair_BVTnum_secondary[kpair_counter, BVT_counter] = 10 * np.log10(GSNR_BVT1[0] ** -1)
                     self.HL_dest_scnd[kpair_counter] = destination_path
 
 
@@ -566,6 +605,8 @@ class PlanningTool:
             path_info_storage['BVT_superCLBand_count'] = BVT_superCLBand_count_path
             path_info_storage['LSP_array_pair'] = LSP_array_pair
             path_info_storage['Year_FP_pair'] = Year_FP_pair
+            path_info_storage['destination'] = destination_path
+
 
             return path_info_storage, LSP_array_pair, Year_FP_pair
         
@@ -633,18 +674,29 @@ class PlanningTool:
                             hierarchy_level: dict,
                             Year_FP: np.ndarray) -> np.ndarray:
         """
-        Update and track the average node degree of High-Level (HL) nodes over the planning period.
+        Update and track the average node degree of nodes in the {hierarchy_level} across the planning period.
+
+        This method computes how the average degree (number of active fiber-pair connections) 
+        of HL nodes evolves over time based on annual fiber-pair allocations (`Year_FP`). 
+        It compares each year's fiber-pair matrix with the previous year to determine 
+        new or removed connections and updates node degrees accordingly.
+
+        The resulting yearly average node degrees are both stored internally and returned.
 
         Args:
-            HL_dict (dict): Dictionary containing HL network information.
-                            Required key:
-                                - 'standalone': np.ndarray of HL node IDs.
-            Year_FP (np.ndarray): A 2D array (years × links) indicating the fiber pair allocation
-                                per link for each year.
+            hierarchy_level (int): The current HL hierarchy level to analyze 
+                (e.g., 4 for HL4 nodes).
+            Year_FP (np.ndarray): A 2D array of shape (years × links) indicating 
+                the number of allocated fiber pairs per link for each year.
 
+        Updates:
+            self.degree_number_HLs (np.ndarray): Average node degree of HL nodes for each simulated year.
+            
         Returns:
-            np.ndarray: Array of average HL node degrees for each year.
+            None
+
         """
+        
         HL_Standalone = self.network.hierarchical_levels[f"HL{hierarchy_level}"]['standalone'] # Extract standalone HL nodes
         HL_degrees = self.network.get_node_degrees(HL_Standalone) # Get initial node degrees for HL nodes (degree per node)
         degree_node_all_topo_HL_final = HL_degrees.copy() # Create a copy to track node degrees evolution across years
@@ -683,18 +735,31 @@ class PlanningTool:
 
     def _calculate_BVT_usage(self) -> dict:
         """
-        Calculate cumulative BVT (Bandwidth Variable Transceiver) counts and 100G licenses for each year.
+        Calculate cumulative BVT (Bandwidth Variable Transceiver) usage and 100G license counts per year.
 
-        This function accumulates the number of BVTs (for all bands: C, SuperC, L) and 100G licenses 
-        across the planning period and stores them as instance attributes.
+        This method computes the cumulative number of deployed BVTs across all optical bands 
+        (C, SuperC, and L) and the total 100G license usage for each year in the planning period.
+        The results are aggregated annually and stored as instance attributes for later reporting 
+        or visualization.
+
+        The calculation assumes four 100G licenses per BVT unit and accumulates counts 
+        across all years to reflect cumulative infrastructure growth.
+
+        Updates:
+            self.HL_All_100G_lincense (np.ndarray):
+                Cumulative total 100G license usage across all nodes for each year.
+            self.HL_BVTNum_All (np.ndarray):
+                Cumulative total number of BVTs (all bands combined) per year.
+            self.HL_BVTNum_CBand (np.ndarray):
+                Cumulative number of C-band BVTs per year.
+            self.HL_BVTNum_SuperCBand (np.ndarray):
+                Cumulative number of Super C-band BVTs per year.
+            self.HL_BVTNum_LBand (np.ndarray):
+                Cumulative number of L-band BVTs per year.
 
         Returns:
-            dict: A dictionary containing yearly cumulative counts for:
-                - HL_All_100G_lincense
-                - HL_BVTNum_All
-                - HL_BVTNum_CBand
-                - HL_BVTNum_SuperCBand
-                - HL_BVTNum_LBand
+            None
+            
         """
         period_time = self.period_time
 
@@ -736,26 +801,64 @@ class PlanningTool:
                          minimum_hierarchy_level: int,
                          result_directory):
         """
-        Save network analysis results for a given hierarchy level to compressed NPZ files.
+        Save detailed network planning results for a given hierarchy level to compressed NPZ files.
 
-        This function calculates the subgraph for the given hierarchy level, determines the
-        corresponding link indices, and saves several result files including BVT information,
-        link-level usage, node capacity profiles, and traffic data.
+        This function generates the subgraph corresponding to the current hierarchy level,
+        extracts relevant hierarchical-level (HL) link indices, computes degree metrics per link and 
+        spectral band, and saves various results including BVT allocations, link usage, 
+        node capacity profiles, traffic flows, and GSNR measurements.
 
         Args:
             hierarchy_level (int): The current hierarchy level being analyzed.
             minimum_hierarchy_level (int): The minimum hierarchy level considered for subgraph generation.
             result_directory (Path): Directory where the output files will be saved.
 
-        Saves:
-            - {topology_name}_HL{hierarchy_level}_bvt_info.npz
-            - {topology_name}_HL{hierarchy_level}_link_info.npz
-            - {topology_name}_HL{hierarchy_level}_node_capacity_profile_array.npz
-        """    
+        Saves the following files:
+
+        1. `{topology_name}_HL{hierarchy_level}_bvt_info.npz`:
+            - `HL_All_100G_lincense`: Total 100G licenses used per year.
+            - `HL_BVTNum_All`: Total number of BVTs deployed annually.
+            - `HL_BVTNum_CBand`: Number of BVTs allocated in the C-band per year.
+            - `HL_BVTNum_SuperCBand`: Number of BVTs allocated in the Super C-band per year.
+            - `HL_BVTNum_LBand`: Number of BVTs allocated in the L-band per year.
+
+        2. `{topology_name}_HL{hierarchy_level}_link_info.npz`:
+            - `HL_links_indices`: Indices of HL links within the network graph.
+            - `num_link_CBand_annual`: Annual count of links used in the C-band.
+            - `num_link_SupCBand_annual`: Annual count of links used in the Super C-band.
+            - `num_link_LBand_annual`: Annual count of links used in the L-band.
+            - `HL_CDegree_Domain`: Weighted degree for C-band links (2 per link per endpoint).
+            - `HL_SuperCDegree_Domain`: Weighted degree for Super C-band links.
+            - `HL_LDegree_Domain`: Weighted degree for L-band links.
+            - `Total_effective_FP_new_annual`: total km of fiber pair usage across all links per year.
+            - `HL_FPNum`: Fiber pair usage per link per year (`Year_FP_new`).
+            - `HL_FPNumCo`: Fiber pair usage per colocated HL node per year (`Year_FP_HL_colocated`).
+            - `degree_number_HLs`: Node degree per HL node.
+            - `traffic_flow_links_array`: Total traffic flow (per fiber pair) on each link per year.
+
+        3. `{topology_name}_HL{hierarchy_level}_path_GSNR_info.npz`:
+            - `GSNR_all_paths`: GSNR values for all paths per year.
+            - `GSNR_primary`: GSNR values for primary paths per year.
+            - `GSNR_secondary`: GSNR values for secondary paths per year.
+
+        4. `{topology_name}_HL{hierarchy_level}_node_capacity_profile_array.npz`:
+            - `node_capacity_profile_array`: Node capacity evolution per year, including allocations and residual capacities.
+        
+        5. `{topology_name}_HL{hierarchy_level}_segments_latency.npz`:
+            - `latency` (np.ndarray): Array where each element corresponds to a node and contains a tuple 
+                with the latency (in microseconds) of the primary and secondary paths from that node.
+            - `destinations` (np.ndarray): Array where each element corresponds to a node and contains a tuple 
+                with the destination node indices of the primary and secondary paths from that node.
+
+        Notes:
+            - The NPZ files are compressed for efficient storage.
+            - Arrays typically have shape `[years x links]` or `[years x nodes]` depending on the metric.
+            - Frequency band usage arrays (C, Super C, L) allow post-analysis of spectrum utilization.
+            - Traffic flow and GSNR arrays allow performance evaluation of deployed paths.
+        """
 
         # Generate the subgraph for the given hierarchy level
         subgraph, _ = self.network.compute_hierarchy_subgraph(hierarchy_level, minimum_hierarchy_level)
-
         # Extract HL link indices (filter from all links)
         HL_subnet_links = np.array(list(subgraph.edges(data='weight')))
         mask = np.any(np.all(self.network.all_links[:, None] == HL_subnet_links, axis=2), axis=1)
@@ -787,19 +890,26 @@ class PlanningTool:
                             HL_FPNum=self.Year_FP_new,
                             HL_FPNumCo=self.Year_FP_HL_colocated,
                             degree_number_HLs=self.degree_number_HLs,
-                            CBand_usage=self.CBand_usage,
-                            superCBand_usage=self.superCBand_usage,
-                            superCLBand_usage=self.superCLBand_usage,
-                            traffic_flow_array=self.traffic_flow_array,
-                            primary_paths=self.primary_path_storage)
+                            traffic_flow_links_array=self.traffic_flow_links_array)
+        
+        # Save GSNR informations
+        np.savez_compressed(result_directory / f'{self.network.topology_name}_HL{hierarchy_level}_path_GSNR_info.npz',
+                            GSNR_all_paths = np.array(self.GSNR_BVT_array, dtype=object),
+                            GSNR_primary = np.array(self.GSNR_BVT_array_primary, dtype=object),
+                            GSNR_secondary = np.array(self.GSNR_BVT_array_secondary, dtype=object))
 
         # Save node capacity profile
         np.savez_compressed(result_directory / f'{self.network.topology_name}_HL{hierarchy_level}_node_capacity_profile_array.npz',
                             node_capacity_profile_array=self.node_capacity_profile_array)
+        
+        # Save segments latency
+        np.savez_compressed(result_directory / f"{self.network.topology_name}_HL{hierarchy_level}_segments_latency.npz", 
+                            latency = self.path_latency_storage, 
+                            destinations = self.destinations_storage)
 
 
         
-    def run_planner(self, 
+    def run_planner(self,
                     hierarchy_level: int,
                     prev_hierarchy_level: int,
                     pairs_disjoint: pd.DataFrame,
@@ -812,24 +922,69 @@ class PlanningTool:
                     node_cap_update_idx: int, 
                     result_directory) -> float:
         """
-        Executes the hierarchical planning algorithm for the given hierarchy level.
+        Executes the hierarchical optical network planning algorithm for a given hierarchy level.
+    
+        This function performs traffic allocation, spectrum assignment, and resource planning
+        for both standalone and colocated High-Level (HL) nodes across multiple years. 
+        It computes primary and secondary paths, assigns BVTs (Bandwidth Variable Transceivers),
+        updates frequency plans (FPs), tracks GSNR (Generalized Signal-to-Noise Ratio) evolution,
+        and saves annual network performance results.
+
+        The planner operates iteratively per year and per HL node, handling:
+            - Traffic growth and residual throughput updates
+            - Spectrum assignment via `_spectrum_assignment()`
+            - BVT count and license tracking
+            - Frequency Plan (FP) and link utilization updates
+            - GSNR computation and aggregation over simulation years
+            - Capacity profile updates for source and destination nodes
 
         Args:
-            HL_dict (dict): Dictionary containing standalone and colocated HL node IDs.
-            pairs_disjoint (pd.DataFrame): List of disjoint node pairs for path computation.
-            kpair_standalone (int): Number of K-shortest paths for standalone HL nodes.
-            kpair_colocated (int): Number of K-shortest paths for colocated HL nodes.
-            candidate_paths_standalone_df (pd.DataFrame): Candidate paths for standalone HL pairs.
-            candidate_paths_colocated_df (pd.DataFrame): Candidate paths for colocated HL pairs.
-            GSNR_opt_link (np.ndarray): Link GSNR values.
-            prev_hierarchy_level (int): Previous hierarchy level.
-            hierarchy_level (int): Current hierarchy level.
-            minimum_level (int): Minimum HL level to consider for FP continuity.
-            node_cap_update_idx (int): Index of node capacity vector to update.
-            result_directory (Path): Directory to save result files.
+            hierarchy_level (int): 
+                The current hierarchy level being processed.
+            prev_hierarchy_level (int): 
+                The previous hierarchy level used for continuity and reference.
+            pairs_disjoint (pd.DataFrame): 
+                DataFrame containing disjoint node pairs for routing and path computation.
+            kpair_standalone (int): 
+                Number of K-shortest paths to consider for standalone HL nodes.
+            kpair_colocated (int): 
+                Number of K-shortest paths to consider for colocated HL nodes.
+            candidate_paths_standalone_df (pd.DataFrame): 
+                DataFrame of candidate paths for standalone HL pairs, including metrics like hops, costs, and GSNR.
+            candidate_paths_colocated_df (pd.DataFrame): 
+                DataFrame of candidate paths for colocated HL pairs, used for colocated spectrum assignment.
+            GSNR_opt_link (np.ndarray): 
+                Array of per-link GSNR (Generalized Signal-to-Noise Ratio) values.
+            minimum_level (int): 
+                Minimum hierarchy level considered in the network for FP continuity and reference.
+            node_cap_update_idx (int): 
+                Index in the node capacity array that determines where new capacity values are stored.
+            result_directory (Path or str): 
+                Directory path where annual and summary results are saved.
 
+        Updates:
+        - `self.HL_BVT_number_all_annual (np.ndarray)`: Annual count of deployed BVTs across all nodes.
+        - `self.Residual_Throughput_BVT_standalone_HLs (np.ndarray)`: Residual unallocated throughput for standalone HLs per year.
+        - `self.Residual_Throughput_BVT_colocated_HLs (np.ndarray)`: Residual unallocated throughput for colocated HLs per year.
+        - `self.Year_FP (np.ndarray)`: Number of fiber pairs in different years for network links.
+        - `self.Year_FP_HL_colocated (np.ndarray)`: Number of fiber pairs in years in-site links.
+        - `self.Year_FP_new (np.ndarray)`: Number of fiber pairs in different years for network links based on spectrum assignment.
+        - `self.Total_effective_FP_new_annual (np.ndarray)`: Total km of fiber pair usage across all links per year.
+        - `self.GSNR_BVT_array (np.ndarray)`: GSNR records per year.
+        - `self.GSNR_BVT_array_primary (np.ndarray)`: GSNR records per year for primary paths.
+        - `self.GSNR_BVT_array_secondary (np.ndarray)`: GSNR records per year for secondary paths.
+        - `self.node_capacity_profile_array (np.ndarray)`: Node capacity evolution per year, including allocations and residual capacities.
+        - `self.traffic_flow_links_array (np.ndarray)`: Annual traffic volume per network link.
+        - `self.num_link_CBand_annual (np.ndarray)`, `self.num_link_SupCBand_annual (np.ndarray)`, `self.num_link_LBand_annual (np.ndarray)`: Band utilization counts across links.
+        - `self.num_100G_licence_annual (np.ndarray)`: Annual count of 100G licenses in use.
+        - `self.Residual_100G (np.ndarray)`: Residual 100G traffic capacity not yet allocated.
+        - `self.LAND_Links_Storage (np.ndarray)`: Stores link assignments for LAND pairs.
+        - `self.LSP_array (np.ndarray)`: Link-State-Profile array representing wavelength/channel allocation states across links in eeach year.
+        - `self.path_latency_storage (list)`: Latency records for primary and secondary paths.
+        - `self.destinations_storage (list)`: Destination node records for primary and secondary paths.
+        
         Returns:
-            float: Total cost of the generated network design for the current
+            None
 
         Example:
         --------
@@ -854,6 +1009,7 @@ class PlanningTool:
         mask = np.any(np.all(self.network.all_links[:, None] == HL_subnet_links, axis=2), axis=1)
         HL_links_indices = np.where(mask)[0]
 
+        all_nodes = self.network._calc_all_hierarchical_nodes()
         # GSNR to reduce when storing GSNR values per year in the calculations
         if hierarchy_level == 4 or hierarchy_level == 5: 
             reduce_GSNR_year = 1.5 
@@ -865,47 +1021,52 @@ class PlanningTool:
         period_time = self.period_time
 
         # array for saving destinations of standalone nodes in each year, in the third dimension 0 is for primary destination and 1 is for secondary destination
-        HL_standalone_dest_profile = np.zeros(shape = (period_time, len(HL_standalone), 2), dtype = np.int8)
+        HL_standalone_dest_profile = np.zeros(shape = (period_time, len(HL_standalone), 2), dtype = np.int32)
 
         # array for saving destinations of colocated nodes in each year, in the third dimension 0 is for primary destination and 1 is for secondary destination
-        HL_colocated_dest_profile = np.zeros(shape = (period_time, len(HL_colocated)), dtype = np.int8)
+        HL_colocated_dest_profile = np.zeros(shape = (period_time, len(HL_colocated)), dtype = np.int32)
 
         # Define maximum number of fiber pairs per link
-        FP_max_num = 20
-        
+        Flag_load_Traffic_Flow = 0
         for year in range(1 , period_time + 1):
 
             print('Processing Year: ', year)
 
             if hierarchy_level == minimum_level:
                     # Create node_capacity_profile array in the minimum hierarchy level
-                    node_capacity_profile = np.zeros(shape = (len(HL_colocated) + len(HL_standalone), minimum_level))
+                    node_capacity_profile = np.zeros(shape = (self.network.adjacency_matrix.shape[0], minimum_level))
             else:
                     # Load node_capacity_profile array of previous hierarchy level
                     node_capacity_profile_array_prev_hl = np.load(result_directory /  f"{self.network.topology_name}_HL{prev_hierarchy_level}_node_capacity_profile_array.npz")['node_capacity_profile_array']
                     node_capacity_profile = node_capacity_profile_array_prev_hl[year - 1, :, :]
 
                     # Calculate number of 100G licence of each year
-                    self.num_100G_licence_annual[year - 1, :] = np.ceil(0.01 * (node_capacity_profile[:, node_cap_update_idx + 1] - self.Residual_100G))
-                    self.Residual_100G += 100 * self.num_100G_licence_annual[year - 1, :] - node_capacity_profile[:, node_cap_update_idx + 1]
+                    self.num_100G_licence_annual[year - 1, :] = np.ceil(0.01 * (node_capacity_profile[all_nodes, node_cap_update_idx + 1] - self.Residual_100G))
+                    self.Residual_100G += 100 * self.num_100G_licence_annual[year - 1, :] - node_capacity_profile[all_nodes, node_cap_update_idx + 1]
 
-                    # Load different band usage for previous hierarchy level
-                    self.CBand_usage = np.load(result_directory /  f'{self.network.topology_name}_HL{prev_hierarchy_level}_link_info.npz')['CBand_usage']
-                    self.superCBand_usage = np.load(result_directory /  f'{self.network.topology_name}_HL{prev_hierarchy_level}_link_info.npz')['superCBand_usage']
-                    self.superCLBand_usage = np.load(result_directory /  f'{self.network.topology_name}_HL{prev_hierarchy_level}_link_info.npz')['superCLBand_usage']
+                    if Flag_load_Traffic_Flow == 0:
+                        
+                        # Load Band usage from previous hierarchy level
+                        self.num_link_CBand_annual = np.load(result_directory /  f'{self.network.topology_name}_HL{prev_hierarchy_level}_link_info.npz')['num_link_CBand_annual']
+                        self.num_link_SupCBand_annual = np.load(result_directory /  f'{self.network.topology_name}_HL{prev_hierarchy_level}_link_info.npz')['num_link_SupCBand_annual']
+                        self.num_link_LBand_annual = np.load(result_directory /  f'{self.network.topology_name}_HL{prev_hierarchy_level}_link_info.npz')['num_link_LBand_annual']
+                        
+                        # Load traffic_flow_links_array for previous hierarchy level
+                        self.traffic_flow_links_array = np.load(result_directory /  f'{self.network.topology_name}_HL{prev_hierarchy_level}_link_info.npz')['traffic_flow_links_array']
+                        Flag_load_Traffic_Flow = 1
                     
-                    # Load traffic_flow_array for previous hierarchy level
-                    self.traffic_flow_array = np.load(result_directory /  f'{self.network.topology_name}_HL{prev_hierarchy_level}_link_info.npz')['traffic_flow_array']
+                    # Load path latency and destinations for previous hierarchy level
+                    self.path_latency_storage = np.load(result_directory / f"{self.network.topology_name}_HL{prev_hierarchy_level}_segments_latency.npz", allow_pickle = True)['latency']
+                    self.destinations_storage = np.load(result_directory / f"{self.network.topology_name}_HL{prev_hierarchy_level}_segments_latency.npz", allow_pickle = True)['destinations']
                     
-                    # Load primary_path_storage for previous hierarchy level (use for calculate latency of primary paths)
-                    self.primary_path_storage = np.load(result_directory /  f'{self.network.topology_name}_HL{prev_hierarchy_level}_link_info.npz')['primary_paths']
-
             #######################################################
             # Part 1: Spectrum assignment for standalone HLs
             #######################################################
 
             
-            GSNR_BVT_per_year = [] # tracks signal quality (GSNR) per BVT
+            GSNR_BVT_per_year = [] # tracks signal quality (GSNR) of all paths
+            GSNR_BVT_per_year_primary = [] # tracks signal quality (GSNR) of primary paths
+            GSNR_BVT_per_year_secondary = [] # tracks signal quality (GSNR) of secondary paths
 
             for node_idx in range(len(HL_standalone)): # Iterate through standalone nodes
                 
@@ -913,6 +1074,7 @@ class PlanningTool:
                 if hierarchy_level == minimum_level:
                     HL_needed_traffic = self.lowest_HL_added_traffic_annual_standalone[year - 1, node_idx]
                 else:
+                    
                     HL_needed_traffic = node_capacity_profile[HL_standalone[node_idx], node_cap_update_idx + 1]
                 
                 
@@ -969,6 +1131,9 @@ class PlanningTool:
                     paths_storage = []
 
                     primary_path_storage_array_standalone = []
+                    
+                    # storage for destinations of primary and secondary paths
+                    latency_storage = []
 
                     self.HL_dest_prim = np.zeros(num_kpairs)
                     self.HL_dest_scnd = np.zeros(num_kpairs)
@@ -993,7 +1158,8 @@ class PlanningTool:
                                                                                                    node_list = HL_standalone,
                                                                                                    GSNR_link = GSNR_opt_link,
                                                                                                    LSP_array_pair = LSP_array_pair, 
-                                                                                                   Year_FP_pair = Year_FP_pair)
+                                                                                                   Year_FP_pair = Year_FP_pair, 
+                                                                                                   HL_subnet_links = HL_links_indices)
                         
                         # Spectrum assignment of secondary path
                         secondary_path_IDX = int(candidate_path_pair.iloc[final_K_pair_counter]['secondary_path_IDx'])
@@ -1007,7 +1173,8 @@ class PlanningTool:
                                                                                                      node_list = HL_standalone,
                                                                                                      GSNR_link = GSNR_opt_link,
                                                                                                      LSP_array_pair = LSP_array_pair, 
-                                                                                                     Year_FP_pair = Year_FP_pair)
+                                                                                                     Year_FP_pair = Year_FP_pair, 
+                                                                                                     HL_subnet_links = HL_links_indices)
                         
                         # Calculate the first cost metric, representing the maximum frequency slot (FS) usage on both primary and secondary paths
                         cost_func[final_K_pair_counter, 0] = max(primary_info_dict['f_max']) + max(secondary_info_dict['f_max'])
@@ -1035,6 +1202,7 @@ class PlanningTool:
                         pair_links_tuple = (primary_info_dict['links'], secondary_info_dict['links'])
                         paths_storage.append(pair_links_tuple)
                         primary_path_storage_array_standalone.append(primary_path_IDX)
+                        latency_storage.append((primary_info_dict['distance'] * 5, secondary_info_dict['distance'] * 5))
 
 
                     # #################### Pair Selection ####################
@@ -1064,14 +1232,18 @@ class PlanningTool:
                         ])
                     )
 
-                    # Store traffic flow through each link in this year
-                    best_pair_links_tuple = paths_storage[index_feasible_pair[0]]
-                    for links_arr in best_pair_links_tuple:
-                        for link in links_arr:
-                            self.traffic_flow_array[year - 1, link] += HL_needed_traffic
+                    GSNR_BVT_per_year_primary.extend(self.GSNR_BVT_Kpair_BVTnum_primary[index_feasible_pair[0], :])
+                    GSNR_BVT_per_year_secondary.extend(self.GSNR_BVT_Kpair_BVTnum_secondary[index_feasible_pair[0], :])
 
-                    # Store primary path IDx for calculating latency
-                    self.primary_path_storage[HL_standalone[node_idx]] = primary_path_storage_array_standalone[index_feasible_pair[0]]
+                    self.LAND_Links_Storage[HL_standalone[node_idx]] = paths_storage[index_feasible_pair[0]]
+
+                    
+                    # Store latency and destinations of this node (primary_path, secondary_path)
+                    self.destinations_storage[HL_standalone[node_idx]] = [self.HL_dest_prim[index_feasible_pair[0]], 
+                                                                          self.HL_dest_scnd[index_feasible_pair[0]]]
+                    
+                    self.path_latency_storage[HL_standalone[node_idx]] = latency_storage[index_feasible_pair[0]]
+                    
 
                 if year > 1 and (hierarchy_level == minimum_level or HL_needed_traffic != 0):
 
@@ -1131,6 +1303,15 @@ class PlanningTool:
                     # update destination node capacity: add the remaining half of the node's original capacity to the destination node's allocated capacity.
                     node_capacity_profile[HL_standalone_dest_profile[year - 1, node_idx, 1], node_cap_update_idx] += 0.5 * node_capacity_profile[HL_standalone[node_idx], node_cap_update_idx + 1]
 
+                # Select the last LAND pair of this node
+                best_pair_links_tuple = self.LAND_Links_Storage[HL_standalone[node_idx]]
+
+                # Store traffic flow through each link in this year
+                for links_arr in best_pair_links_tuple:
+                    for link in links_arr:
+                        self.traffic_flow_links_array[year - 1, link] += 0.5 * HL_needed_traffic
+
+
             #######################################################
             # Part 2: Spectrum assignment for colocated HLs
             #######################################################
@@ -1184,7 +1365,8 @@ class PlanningTool:
                                                                     node_list = HL_colocated,
                                                                     GSNR_link = GSNR_opt_link,
                                                                     LSP_array_pair = None, 
-                                                                    Year_FP_pair = None)
+                                                                    Year_FP_pair = None, 
+                                                                    HL_subnet_links = None)
                     
                     self.Year_FP_HL_colocated = Year_FP_HL_colocated
                     
@@ -1227,7 +1409,8 @@ class PlanningTool:
                                                                                                      node_list = HL_colocated,
                                                                                                      GSNR_link = GSNR_opt_link,
                                                                                                      LSP_array_pair = LSP_array_pair, 
-                                                                                                     Year_FP_pair = Year_FP_pair)
+                                                                                                     Year_FP_pair = Year_FP_pair, 
+                                                                                                     HL_subnet_links = HL_links_indices)
                         
                         # Calculate the first cost metric, representing the maximum frequency slot (FS) usage on both primary and secondary paths
                         cost_func[final_K_pair_counter, 0] = max(secondary_info_dict['f_max'])
@@ -1275,6 +1458,9 @@ class PlanningTool:
                 
                     # record GSNR for the selected path across all BVTs  
                     GSNR_BVT_per_year.extend(self.GSNR_BVT_Kpair_BVTnum_secondary[index_feasible_pair[0]])
+                    GSNR_BVT_per_year_secondary.extend(self.GSNR_BVT_Kpair_BVTnum_secondary[index_feasible_pair[0], :])
+
+                    self.LAND_Links_Storage[HL_colocated[node_idx]] = paths_storage[index_feasible_pair[0]]
 
                 if year > 1 and (hierarchy_level == minimum_level or HL_needed_traffic != 0):
 
@@ -1330,13 +1516,21 @@ class PlanningTool:
                     # update destination node capacity: add the remaining half of the node's original capacity to the destination node's allocated capacity.
                     node_capacity_profile[HL_colocated_dest_profile[year - 1, node_idx], node_cap_update_idx] += 0.5 * node_capacity_profile[HL_colocated[node_idx], node_cap_update_idx + 1]
 
+
+                # Select the last LAND pair of this node
+                best_pair_links = self.LAND_Links_Storage[HL_colocated[node_idx]]
+
+                # Store traffic flow through each link in this year
+                for link in best_pair_links:
+                    self.traffic_flow_links_array[year - 1, link] += 0.5 * HL_needed_traffic
+
             ######################################################################
             # Update Frequency Plans (FP) and Degree Counters for Each Year
             ######################################################################
             
             if year > 1:
 
-                #  update Frequency Plan (FP) for HL4 SubNetwork Links
+                #  update Frequency Plan (FP) for HL SubNetwork Links
                 for link_idx in range(len(HL_subnet_links)):
 
                         # If the FP for the current year and link is not established (i.e., equals zero) inherit the FP from the previous year for continuity.
@@ -1346,7 +1540,7 @@ class PlanningTool:
                             self.Year_FP[year - 1, HL_links_indices[link_idx]] = self.Year_FP[year - 2, HL_links_indices[link_idx]]
 
 
-                # update Frequency Plan (FP) for HL4 Co-located Links
+                # update Frequency Plan (FP) for HL Colocated Links
                 for node_idx in range(len(HL_colocated)):
 
                     # If the FP for the current year and link is not established (i.e., equals zero) inherit the FP from the previous year for continuity.
@@ -1376,8 +1570,8 @@ class PlanningTool:
             # loop over each link in the HL4 SubNetwork
             for link_idx in range(len(HL_subnet_links)):
 
-                # loop over each Frequency Plan (FP) counter (assumed 20 possible FPs per link)
-                for FP_counter in range(FP_max_num):
+                # loop over each fiber pair (assumed 20 possible FPs per link)
+                for FP_counter in range(self.FP_max_num):
 
                     # initialize flag to check if an FP has been counted for this link in this iteration
                     FP_flag = 0
@@ -1386,7 +1580,7 @@ class PlanningTool:
                     if np.any(self.LSP_array[120:, HL_links_indices[link_idx], FP_counter] != 0):
 
                         # increment the L-Band link count for the current year
-                        self.num_link_LBand_annual[year - 1] += 1
+                        self.num_link_LBand_annual[year - 1, HL_links_indices[link_idx]] += 1
             
                         # Set flag indicating an FP was used for this link
                         FP_flag = 1
@@ -1401,7 +1595,7 @@ class PlanningTool:
                     if np.any(self.LSP_array[96:120, HL_links_indices[link_idx], FP_counter]) != 0:
 
                         # increment the L-Band link count for the current year
-                        self.num_link_SupCBand_annual[year - 1] += 1
+                        self.num_link_SupCBand_annual[year - 1, HL_links_indices[link_idx]] += 1
 
                         # if no FP has been counted yet for this link:
                         if FP_flag == 0:
@@ -1420,7 +1614,7 @@ class PlanningTool:
                     if any(self.LSP_array[:96, HL_links_indices[link_idx], FP_counter]) != 0:
 
                         # increment the L-Band link count for the current year
-                        self.num_link_CBand_annual[year - 1] += 1
+                        self.num_link_CBand_annual[year - 1, HL_links_indices[link_idx]] += 1
 
                         # if no FP has been counted yet for this link:
                         if FP_flag == 0:
@@ -1432,8 +1626,18 @@ class PlanningTool:
                             self.Total_effective_FP_new_annual[year - 1] += 2 * self.network.weights_array[HL_links_indices[link_idx]]
 
 
-            # store GSNR values for the current year after subtracting 1.5 dB penalty into a cell array.
-            self.GSNR_BVT_array[year - 1] = np.array(GSNR_BVT_per_year) - reduce_GSNR_year
+
+            not_used_links = np.where(self.Year_FP_new[year - 1, :] == 0)
+            self.Year_FP_new[year - 1, not_used_links] += 1
+            
+            # store GSNR values for the current year after subtracting penalty into a numpy array.
+            self.GSNR_BVT_array[year - 1] = np.array(GSNR_BVT_per_year) - reduce_GSNR_year ## GSNR of all paths in each year
+
+            # store GSNR values for the current year after subtracting penalty into a numpy array.
+            self.GSNR_BVT_array_primary[year - 1] = np.array(GSNR_BVT_per_year_primary) - reduce_GSNR_year ## GSNR of primary paths in each year
+
+            # store GSNR values for the current year after subtracting penalty into a numpy array.
+            self.GSNR_BVT_array_secondary[year - 1] = np.array(GSNR_BVT_per_year_secondary) - reduce_GSNR_year ## GSNR of secondary paths in each year
 
             # append the adjusted GSNR values to the overall 10-year GSNR array.
             self.GSNR_HL4_10Year.append(np.array(GSNR_BVT_per_year) - reduce_GSNR_year)
