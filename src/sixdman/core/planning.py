@@ -93,7 +93,7 @@ class PlanningTool:
             FP_max_num (int): 
                 Maximum number of fiber pairs per link (default: 20).
             band_sepration_idx (list):
-                list that contains the start index of C-band and supperC-band in the spectrum 
+                list that contains the start index of C-band and superC-band in the spectrum 
 
         Example:
         ---------
