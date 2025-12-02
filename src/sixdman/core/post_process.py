@@ -190,7 +190,7 @@ class analyse_result:
                         aspect='auto',
                         interpolation='none',
                         origin='upper',
-                        extent=[1, 10, link_state_HL_partisioned.shape[1], 1])
+                        extent=[1, self.period_time, link_state_HL_partisioned.shape[1], 1])
 
             plt.xlabel("Year")
             plt.ylabel("Link index")
@@ -599,17 +599,17 @@ class analyse_result:
         cost_dict['OPEX'] = OPEX
 
         # --- Initialize CAPEX components for each technology and band ---
-        Capex_RoB_C = np.zeros(10)
-        Capex_RoB_SupC = np.zeros(10)
-        Capex_RoB_L = np.zeros(10)
+        Capex_RoB_C = np.zeros(self.period_time)
+        Capex_RoB_SupC = np.zeros(self.period_time)
+        Capex_RoB_L = np.zeros(self.period_time)
 
-        Capex_MCS_C = np.zeros(10)
-        Capex_MCS_SupC = np.zeros(10)
-        Capex_MCS_L = np.zeros(10)
+        Capex_MCS_C = np.zeros(self.period_time)
+        Capex_MCS_SupC = np.zeros(self.period_time)
+        Capex_MCS_L = np.zeros(self.period_time)
 
-        Capex_100GL_Cband = np.zeros(10)
-        Capex_100GL_SupCBand = np.zeros(10)
-        Capex_100GL_LBand = np.zeros(10)
+        Capex_100GL_Cband = np.zeros(self.period_time)
+        Capex_100GL_SupCBand = np.zeros(self.period_time)
+        Capex_100GL_LBand = np.zeros(self.period_time)
 
         # --- Loop over time period to compute annual CAPEX ---
         for y in range(self.period_time):

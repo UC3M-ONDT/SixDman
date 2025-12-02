@@ -65,7 +65,8 @@ class PlanningTool:
                            SR: float = 40 * 1e9,
                            BVT_type: int = 1,
                            Max_bit_rate_BVT: np.ndarray = np.array([400]), 
-                           FP_max_num: int = 20):
+                           FP_max_num: int = 20, 
+                           band_sepration_idx: list = [96, 120]):
         """
         Initialize planning-related matrices and spectrum parameters.
 
@@ -91,6 +92,8 @@ class PlanningTool:
                 Array of supported BVT bitrates in Gbps.
             FP_max_num (int): 
                 Maximum number of fiber pairs per link (default: 20).
+            band_sepration_idx (list):
+                list that contains the start index of C-band and supperC-band in the spectrum 
 
         Example:
         ---------
@@ -104,6 +107,9 @@ class PlanningTool:
         self.Max_bit_rate_BVT = Max_bit_rate_BVT
         self.BVT_type = BVT_type
         self.FP_max_num = FP_max_num
+        
+        self.C_band_separation_idx = band_sepration_idx[0]
+        self.supC_band_separation_idx = band_sepration_idx[1]
 
         # Get number of HL nodes at given hierarchy level
         num_node_standalone = len(self.network.hierarchical_levels[f"HL{hierarchy_level}"]['standalone'])
@@ -615,9 +621,9 @@ class PlanningTool:
 
                         cost_FP_all_BVT_path[BVT_counter] = np.dot(FP_counter_links, self.network.weights_array[linkList_path_sorted]) # calculate the cost of assigning fiber pairs for the BVT_counter-th BVT
 
-                        if FS_path[-1] <= 95: # The final frequency slot used (FS_path(end)) determines the spectrum band
+                        if FS_path[-1] < self.C_band_separation_idx: # The final frequency slot used (FS_path(end)) determines the spectrum band
                             BVT_CBand_count_path += 2
-                        elif 96 <= FS_path[-1] <= 119:
+                        elif self.C_band_separation_idx <= FS_path[-1] < self.supC_band_separation_idx:
                             BVT_superCBand_count_path += 2
                         else:
                             BVT_superCLBand_count_path += 2
@@ -700,9 +706,9 @@ class PlanningTool:
                         Flag_SA_continue_path = 0 # stop searching for more slots
                         self.Year_FP_HL_colocated[year - 1, node_IDx] =  max(self.Year_FP_HL_colocated[year - 1, node_IDx], FP_counter_links + 1) # update the Year_FP_pair to record spectrum usage for each link
                        
-                        if FS_path[-1] <= 95: # The final frequency slot used (FS_primary(end)) determines the spectrum band
+                        if FS_path[-1] < self.C_band_separation_idx: # The final frequency slot used (FS_primary(end)) determines the spectrum band
                             self.HL_BVT_number_Cband_annual[year - 1] += 2
-                        elif 96 <= FS_path[-1] <= 119:
+                        elif self.C_band_separation_idx <= FS_path[-1] < self.supC_band_separation_idx:
                             self.HL_BVT_number_SuperCband_annual[year - 1]  += 2
                         else:
                             self.HL_BVT_number_SuperCLband_annual[year - 1]  += 2
@@ -1651,7 +1657,7 @@ class PlanningTool:
                     FP_flag = 0
 
                     # check for L-Band Link Utilization (indices 121 to end in LSP_array) --- if any element in the specified LSP_array slice is non-zero, it indicates L-Band usage.
-                    if np.any(self.LSP_array[120:, HL_links_indices[link_idx], FP_counter] != 0):
+                    if np.any(self.LSP_array[self.supC_band_separation_idx:, HL_links_indices[link_idx], FP_counter] != 0):
 
                         # increment the L-Band link count for the current year
                         self.num_link_LBand_annual[year - 1, HL_links_indices[link_idx]] += 1
@@ -1666,7 +1672,7 @@ class PlanningTool:
                         self.Total_effective_FP_new_annual[year - 1] += 2 * self.network.weights_array[HL_links_indices[link_idx]]
 
                     # check for Super C-Band Link Utilization (indices 96 to 119 in LSP_array)
-                    if np.any(self.LSP_array[96:120, HL_links_indices[link_idx], FP_counter]) != 0:
+                    if np.any(self.LSP_array[self.C_band_separation_idx:self.supC_band_separation_idx, HL_links_indices[link_idx], FP_counter]) != 0:
 
                         # increment the L-Band link count for the current year
                         self.num_link_SupCBand_annual[year - 1, HL_links_indices[link_idx]] += 1
@@ -1685,7 +1691,7 @@ class PlanningTool:
 
                     
                     # check for C-Band Link Utilization (indices 0 to 95 in LSP_array)
-                    if any(self.LSP_array[:96, HL_links_indices[link_idx], FP_counter]) != 0:
+                    if any(self.LSP_array[:self.C_band_separation_idx, HL_links_indices[link_idx], FP_counter]) != 0:
 
                         # increment the L-Band link count for the current year
                         self.num_link_CBand_annual[year - 1, HL_links_indices[link_idx]] += 1
